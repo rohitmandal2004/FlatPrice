@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: flat-price-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && gunicorn app.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: FRONTEND_URL
+        value: "https://your-vercel-frontend-url.vercel.app" # UPDATE THIS AFTER DEPLOYING FRONTEND
