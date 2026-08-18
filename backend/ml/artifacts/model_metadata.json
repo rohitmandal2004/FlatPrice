@@ -1,0 +1,29 @@
+{
+    "model_name": "Multiple Linear Regression",
+    "model_version": "mlr-v1",
+    "features": [
+        "Area_Sqft",
+        "Floor",
+        "Car_Parking_Sqft",
+        "Bedrooms",
+        "Facing_North",
+        "Facing_South",
+        "Facing_West"
+    ],
+    "training_samples": 80,
+    "testing_samples": 20,
+    "r2_score": 0.9978752157731158,
+    "mae": 0.6312681092674751,
+    "mse": 0.64429300915753,
+    "rmse": 0.8026786462573487,
+    "intercept": -14.036348544132778,
+    "coefficients": {
+        "Area_Sqft": 0.06081275473811486,
+        "Floor": 0.43749879145933773,
+        "Car_Parking_Sqft": 0.024505178503978875,
+        "Bedrooms": 1.1564405541516767,
+        "Facing_North": -0.10120757622310642,
+        "Facing_South": 1.028477592595534,
+        "Facing_West": 0.2342475014968088
+    }
+}
