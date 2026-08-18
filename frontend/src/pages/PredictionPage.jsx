@@ -162,7 +162,7 @@ export default function PredictionPage() {
             >
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Estimated Flat Price</h3>
-                <div className="text-5xl font-extrabold text-primary">
+                <div className="text-4xl md:text-5xl font-extrabold text-primary break-all">
                   ₹{result.predicted_price_lakh} Lakh
                 </div>
                 <div className="text-muted-foreground font-medium">

@@ -22,7 +22,7 @@ export default function MainLayout() {
             <span className="font-bold text-xl hidden sm:inline-block">FlatPredict AI</span>
           </div>
           
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-4 md:gap-6 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;

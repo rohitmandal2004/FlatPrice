@@ -23,16 +23,16 @@ export default function LandingPage() {
           <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl leading-relaxed">
             Estimate flat prices using Multiple Linear Regression based on property characteristics like area, floor, and facing direction.
           </p>
-          <div className="flex justify-center gap-4 mt-8">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8 w-full px-4 sm:px-0">
             <Link 
               to="/predict" 
-              className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors w-full sm:w-auto"
             >
               Predict Price <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
             <Link 
               to="/dashboard" 
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors w-full sm:w-auto"
             >
               Explore Dashboard
             </Link>

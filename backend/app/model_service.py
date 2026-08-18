@@ -58,13 +58,13 @@ class ModelService:
             
         df = self.dataset
         return DatasetStatsResponse(
-            number_of_records=len(df),
-            average_price=round(df['Price_Lakh'].mean(), 2),
-            min_price=round(df['Price_Lakh'].min(), 2),
-            max_price=round(df['Price_Lakh'].max(), 2),
-            average_area=round(df['Area_Sqft'].mean(), 2),
-            bedroom_distribution=df['Bedrooms'].value_counts().to_dict(),
-            facing_distribution=df['Facing'].value_counts().to_dict()
+            number_of_records=int(len(df)),
+            average_price=float(round(df['Price_Lakh'].mean(), 2)),
+            min_price=float(round(df['Price_Lakh'].min(), 2)),
+            max_price=float(round(df['Price_Lakh'].max(), 2)),
+            average_area=float(round(df['Area_Sqft'].mean(), 2)),
+            bedroom_distribution={str(k): int(v) for k, v in df['Bedrooms'].value_counts().items()},
+            facing_distribution={str(k): int(v) for k, v in df['Facing'].value_counts().items()}
         )
 
 model_service = ModelService()
