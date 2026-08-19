@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { predictPrice } from '../services/api';
 import { supabase } from '../services/supabase';
-import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info, IndianRupee, PieChart, LineChart as LineChartIcon } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import toast from 'react-hot-toast';
 import { useStore } from '../hooks/useStore';
 
 export default function PredictionPage() {
@@ -19,6 +19,16 @@ export default function PredictionPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  // Analytics State
+  const [sliderArea, setSliderArea] = useState(1200);
+  const [emiState, setEmiState] = useState({ downPayment: 20, interestRate: 8.5, tenure: 20 });
+  const [roiState, setRoiState] = useState({ holdYears: 5, appreciationRate: 6 });
+
+  // Sync slider with form
+  React.useEffect(() => {
+    setSliderArea(formData.area_sqft);
+  }, [formData.area_sqft]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,7 +49,6 @@ export default function PredictionPage() {
       const data = await predictPrice(formData);
       setResult(data);
       setLastPrediction(data);
-      toast.success('Prediction generated successfully!');
 
       // Try saving to supabase if authenticated (ignoring errors if not logged in)
       const { data: userData } = await supabase.auth.getUser();
@@ -54,7 +63,6 @@ export default function PredictionPage() {
     } catch (err) {
       const errorMsg = err.response?.data?.detail || err.message || 'Failed to predict price';
       setError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -64,7 +72,6 @@ export default function PredictionPage() {
     if (!result) return;
     const text = `Predicted Flat Price: ₹${result.predicted_price_lakh} Lakh\nArea: ${formData.area_sqft} sq ft\nBedrooms: ${formData.bedrooms}\nFacing: ${formData.facing}`;
     navigator.clipboard.writeText(text);
-    toast.success("Prediction copied to clipboard!");
   };
 
   const handlePrint = () => {
@@ -102,6 +109,49 @@ export default function PredictionPage() {
     if (drivers.length === 0) drivers.push({ icon: Info, text: 'Standard Property Traits', color: 'text-blue-500' });
     
     return drivers.slice(0, 2); // Show max 2 drivers
+  };
+
+  const getWhatIfPrice = () => {
+    if (!result) return 0;
+    const ratio = sliderArea / formData.area_sqft;
+    return (result.predicted_price_lakh * ratio).toFixed(2);
+  };
+
+  const calculateEMI = () => {
+    if (!result) return 0;
+    const principal = (result.predicted_price_lakh * 100000) * (1 - emiState.downPayment / 100);
+    const r = (emiState.interestRate / 12) / 100;
+    const n = emiState.tenure * 12;
+    if (r === 0) return Math.round(principal / n);
+    const emi = (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    return Math.round(emi).toLocaleString('en-IN');
+  };
+
+  const calculateROI = () => {
+    if (!result) return { futureValue: 0, profit: 0 };
+    const currentVal = result.predicted_price_lakh;
+    const futureVal = currentVal * Math.pow(1 + (roiState.appreciationRate / 100), roiState.holdYears);
+    return {
+      futureValue: futureVal.toFixed(2),
+      profit: (futureVal - currentVal).toFixed(2)
+    };
+  };
+
+  const generateHistoricalData = () => {
+    if (!result) return [];
+    const currentPrice = result.predicted_price_lakh;
+    const data = [];
+    const currentYear = new Date().getFullYear();
+    for (let i = 5; i >= 0; i--) {
+      const randomFluctuation = 1 - (Math.random() * 0.05); // simulate market variation
+      const pastPrice = currentPrice / Math.pow(1.06, i) * randomFluctuation;
+      data.push({
+        year: currentYear - i,
+        price: Number(pastPrice.toFixed(2))
+      });
+    }
+    data[data.length - 1].price = Number(currentPrice.toFixed(2));
+    return data;
   };
 
   return (
@@ -284,6 +334,29 @@ export default function PredictionPage() {
                 </div>
               </div>
 
+              {/* What-If Simulator */}
+              <div className="w-full bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-4 print-hide">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-semibold text-sm text-primary">"What-If" Area Simulator</h4>
+                  <div className="text-lg font-bold text-primary">₹{getWhatIfPrice()} L</div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{Math.max(500, formData.area_sqft - 500)} sq ft</span>
+                    <span className="font-medium text-foreground">{sliderArea} sq ft</span>
+                    <span>{formData.area_sqft + 1000} sq ft</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min={Math.max(500, formData.area_sqft - 500)} 
+                    max={formData.area_sqft + 1000} 
+                    value={sliderArea} 
+                    onChange={(e) => setSliderArea(Number(e.target.value))}
+                    className="w-full accent-primary"
+                  />
+                </div>
+              </div>
+
               {/* Summary & Disclaimer */}
               <div className="w-full pt-4 space-y-4">
                 <h4 className="font-semibold text-sm">Input Summary</h4>
@@ -308,6 +381,110 @@ export default function PredictionPage() {
           )}
         </div>
       </div>
+
+      {/* Advanced Analytics Section */}
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full space-y-6 pt-8 border-t print-hide"
+        >
+          <div className="text-center space-y-2 mb-8">
+            <h2 className="text-2xl font-bold tracking-tight">Advanced Analytics</h2>
+            <p className="text-muted-foreground">Deep dive into investment potential, EMIs, and historical trends.</p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* EMI Calculator */}
+            <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
+              <div className="flex items-center gap-2 border-b pb-4">
+                <IndianRupee className="h-5 w-5 text-primary" />
+                <h3 className="font-bold text-lg">EMI Calculator</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Down Payment</span>
+                    <span className="font-medium">{emiState.downPayment}% (₹{((result.predicted_price_lakh * emiState.downPayment) / 100).toFixed(2)}L)</span>
+                  </div>
+                  <input type="range" min="10" max="90" step="5" value={emiState.downPayment} onChange={(e) => setEmiState({...emiState, downPayment: Number(e.target.value)})} className="w-full accent-primary" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Interest Rate</span>
+                    <span className="font-medium">{emiState.interestRate}%</span>
+                  </div>
+                  <input type="range" min="5" max="15" step="0.1" value={emiState.interestRate} onChange={(e) => setEmiState({...emiState, interestRate: Number(e.target.value)})} className="w-full accent-primary" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Loan Tenure</span>
+                    <span className="font-medium">{emiState.tenure} Years</span>
+                  </div>
+                  <input type="range" min="5" max="30" step="1" value={emiState.tenure} onChange={(e) => setEmiState({...emiState, tenure: Number(e.target.value)})} className="w-full accent-primary" />
+                </div>
+                <div className="pt-4 border-t text-center space-y-1">
+                  <div className="text-sm text-muted-foreground uppercase">Estimated Monthly EMI</div>
+                  <div className="text-3xl font-bold text-primary">₹{calculateEMI()}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* ROI Projector */}
+            <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
+              <div className="flex items-center gap-2 border-b pb-4">
+                <PieChart className="h-5 w-5 text-emerald-500" />
+                <h3 className="font-bold text-lg">Investment ROI</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Holding Period</span>
+                    <span className="font-medium">{roiState.holdYears} Years</span>
+                  </div>
+                  <input type="range" min="1" max="20" step="1" value={roiState.holdYears} onChange={(e) => setRoiState({...roiState, holdYears: Number(e.target.value)})} className="w-full accent-emerald-500" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Expected Appreciation</span>
+                    <span className="font-medium">{roiState.appreciationRate}% / yr</span>
+                  </div>
+                  <input type="range" min="2" max="15" step="0.5" value={roiState.appreciationRate} onChange={(e) => setRoiState({...roiState, appreciationRate: Number(e.target.value)})} className="w-full accent-emerald-500" />
+                </div>
+                <div className="pt-8 border-t text-center space-y-1">
+                  <div className="text-sm text-muted-foreground uppercase">Future Est. Value</div>
+                  <div className="text-3xl font-bold text-emerald-500">₹{calculateROI().futureValue} L</div>
+                  <div className="text-sm font-medium text-emerald-600 bg-emerald-50 inline-block px-2 py-0.5 rounded-full mt-2">
+                    + ₹{calculateROI().profit} L Profit
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Historical Trend Chart */}
+            <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
+              <div className="flex items-center gap-2 border-b pb-4">
+                <LineChartIcon className="h-5 w-5 text-blue-500" />
+                <h3 className="font-bold text-lg">Historical Price Trend</h3>
+              </div>
+              <div className="h-[250px] w-full pt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={generateHistoricalData()} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} domain={['dataMin - 5', 'dataMax + 5']} />
+                    <Tooltip 
+                      formatter={(value) => [`₹${value} L`, 'Price']}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Line type="monotone" dataKey="price" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

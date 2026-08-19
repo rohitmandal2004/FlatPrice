@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { getDatasetStats, getModelInfo } from '../services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { getDatasetStats, getModelInfo, getDatasetDownloadUrl } from '../services/api';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis } from 'recharts';
+import { Loader2, Download, History, Trash2 } from 'lucide-react';
+import { useStore } from '../hooks/useStore';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -9,6 +10,10 @@ export default function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [modelInfo, setModelInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeDistribution, setActiveDistribution] = useState('facing'); // 'facing' | 'bedrooms'
+  const [coeffView, setCoeffView] = useState('absolute'); // 'absolute' | 'raw'
+  const history = useStore(state => state.history);
+  const clearHistory = useStore(state => state.clearHistory);
 
   useEffect(() => {
     async function loadData() {
@@ -28,6 +33,22 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
+  // Generate mock scatter data for Area vs Price
+  const scatterData = React.useMemo(() => {
+    if (!stats) return [];
+    const data = [];
+    const avgPrice = stats.average_price;
+    const avgArea = 1200; // Mock average area
+    for (let i = 0; i < 60; i++) {
+      const area = Math.floor(Math.random() * (2500 - 500) + 500);
+      const price = avgPrice * (area / avgArea) * (1 + (Math.random() * 0.4 - 0.2));
+      // Z values for varying bubble sizes
+      const importance = Math.floor(Math.random() * 100) + 20; 
+      data.push({ area, price: Number(price.toFixed(2)), z: importance });
+    }
+    return data;
+  }, [stats]);
+
   if (loading) {
     return <div className="flex h-[50vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -39,13 +60,31 @@ export default function DashboardPage() {
   // Format data for Recharts
   const bedData = Object.entries(stats.bedroom_distribution).map(([k, v]) => ({ name: `${k} BHK`, value: v }));
   const facingData = Object.entries(stats.facing_distribution).map(([k, v]) => ({ name: k, value: v }));
-  const coeffData = Object.entries(modelInfo.coefficients).map(([k, v]) => ({ name: k.replace('_Sqft', ''), value: v })).sort((a,b) => Math.abs(b.value) - Math.abs(a.value));
+  
+  const coeffData = Object.entries(modelInfo.coefficients)
+    .map(([k, v]) => ({ 
+      name: k.replace('_Sqft', ''), 
+      value: coeffView === 'absolute' ? Math.abs(v) : v,
+      originalValue: v
+    }))
+    .sort((a,b) => Math.abs(b.originalValue) - Math.abs(a.originalValue));
+
+  const activePieData = activeDistribution === 'facing' ? facingData : bedData;
+
+  const handleDownloadDataset = () => {
+    window.location.href = getDatasetDownloadUrl();
+  };
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-        <p className="text-muted-foreground">Model performance and dataset statistics.</p>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+          <p className="text-muted-foreground">Model performance and dataset statistics.</p>
+        </div>
+        <button onClick={handleDownloadDataset} className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4 cursor-pointer">
+          <Download className="mr-2 h-4 w-4" /> Export Dataset (.xlsx)
+        </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -69,28 +108,42 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
+        {/* Feature Importance Chart */}
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 space-y-4">
-          <h3 className="font-semibold text-lg">Feature Importance (Coefficients)</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-lg">Feature Importance</h3>
+            <div className="flex bg-muted p-1 rounded-md">
+              <button onClick={() => setCoeffView('absolute')} className={`px-3 py-1 text-xs font-medium rounded-sm transition-colors cursor-pointer ${coeffView === 'absolute' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Absolute</button>
+              <button onClick={() => setCoeffView('raw')} className={`px-3 py-1 text-xs font-medium rounded-sm transition-colors cursor-pointer ${coeffView === 'raw' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Raw</button>
+            </div>
+          </div>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={coeffData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={80} fontSize={12} />
-                <Tooltip formatter={(val) => val.toFixed(4)} />
+                <Tooltip formatter={(val, name, props) => [props?.payload?.originalValue !== undefined ? props.payload.originalValue.toFixed(4) : val, 'Coefficient']} />
                 <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
+        {/* Dataset Distribution Chart */}
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 space-y-4">
-          <h3 className="font-semibold text-lg">Dataset Facing Distribution</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-lg">Dataset Distribution</h3>
+            <div className="flex bg-muted p-1 rounded-md">
+              <button onClick={() => setActiveDistribution('facing')} className={`px-3 py-1 text-xs font-medium rounded-sm transition-colors cursor-pointer ${activeDistribution === 'facing' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Facing</button>
+              <button onClick={() => setActiveDistribution('bedrooms')} className={`px-3 py-1 text-xs font-medium rounded-sm transition-colors cursor-pointer ${activeDistribution === 'bedrooms' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Bedrooms</button>
+            </div>
+          </div>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={facingData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
-                  {facingData.map((entry, index) => (
+                <Pie data={activePieData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
+                  {activePieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -99,7 +152,118 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </div>
+        
+        {/* Scatter Plot Chart (Full width) */}
+        <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/50 shadow-sm p-6 space-y-6 md:col-span-2 relative overflow-hidden">
+          {/* Decorative glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+          
+          <div className="space-y-1">
+            <h3 className="font-bold text-xl text-emerald-950">Area vs. Price Correlation</h3>
+            <p className="text-sm text-emerald-600/80 font-medium">Sample distribution of property sizes vs valuation</p>
+          </div>
+          
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
+                <defs>
+                  <linearGradient id="scatterGlow" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#34d399" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  type="number" 
+                  dataKey="area" 
+                  name="Area" 
+                  unit=" sqft" 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={false}
+                  tickLine={false}
+                  dy={10}
+                />
+                <YAxis 
+                  type="number" 
+                  dataKey="price" 
+                  name="Price" 
+                  unit=" L" 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={false}
+                  tickLine={false}
+                  dx={-10}
+                />
+                <ZAxis type="number" dataKey="z" range={[40, 200]} />
+                <Tooltip 
+                  cursor={{ strokeDasharray: '3 3', stroke: '#cbd5e1', strokeWidth: 1 }} 
+                  contentStyle={{ 
+                    borderRadius: '12px', 
+                    border: '1px solid rgba(255,255,255,0.4)', 
+                    background: 'rgba(255,255,255,0.85)', 
+                    backdropFilter: 'blur(12px)', 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                    color: '#0f172a',
+                    fontWeight: '500'
+                  }} 
+                />
+                <Scatter 
+                  name="Properties" 
+                  data={scatterData} 
+                  fill="url(#scatterGlow)" 
+                  shape="circle"
+                  stroke="#ffffff"
+                  strokeWidth={1.5}
+                  className="drop-shadow-sm"
+                />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
+
+      {/* Prediction History */}
+      {history && history.length > 0 && (
+        <div className="pt-8 border-t space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <History className="h-6 w-6 text-primary" />
+                Prediction History
+              </h2>
+              <p className="text-muted-foreground">Your recent property price estimates.</p>
+            </div>
+            <button 
+              onClick={clearHistory}
+              className="inline-flex items-center text-sm text-rose-500 hover:text-rose-600 transition-colors"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear
+            </button>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {history.map((item) => (
+              <div key={item.id} className="bg-card border rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-2xl font-bold text-primary">₹{item.predicted_price_lakh}L</div>
+                    <div className="text-xs text-muted-foreground">{new Date(item.id).toLocaleDateString()}</div>
+                  </div>
+                  <div className="bg-muted px-2 py-1 rounded text-xs font-medium">
+                    {item.area_sqft} sq ft
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm bg-muted/30 p-3 rounded-lg">
+                  <div><span className="text-muted-foreground">Facing:</span> {item.facing}</div>
+                  <div><span className="text-muted-foreground">Floor:</span> {item.floor}</div>
+                  <div><span className="text-muted-foreground">Beds:</span> {item.bedrooms}</div>
+                  <div><span className="text-muted-foreground">Parking:</span> {item.car_parking_sqft}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

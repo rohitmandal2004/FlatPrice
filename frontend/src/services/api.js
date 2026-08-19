@@ -28,3 +28,7 @@ export const getDatasetStats = async () => {
   const response = await apiClient.get('/dataset-stats');
   return response.data;
 };
+
+export const getDatasetDownloadUrl = () => {
+  return `${API_URL}/dataset-download`;
+};

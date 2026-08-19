@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { Toaster } from 'react-hot-toast';
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
 import MainLayout from './layouts/MainLayout';
 import LandingPage from './pages/LandingPage';
@@ -13,7 +12,6 @@ function App() {
   return (
     <HelmetProvider>
       <Router>
-        <Toaster position="top-right" />
         <SignedIn>
           <Routes>
             <Route path="/" element={<MainLayout />}>

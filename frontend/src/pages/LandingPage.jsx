@@ -20,10 +20,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col items-center relative overflow-hidden">
-      {/* Decorative Background Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[120px] pointer-events-none -z-10" />
-      <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none -z-10" />
+    <div className="flex flex-col items-center relative overflow-hidden bg-white">
 
       {/* Hero Section */}
       <section className="w-full py-16 md:py-28 lg:py-36 xl:py-48 flex flex-col items-center text-center relative z-10">
@@ -39,13 +36,13 @@ export default function LandingPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary mb-2 shadow-sm backdrop-blur-sm"
           >
-            <Sparkles className="h-4 w-4" />
-            AI-Powered Real Estate Analytics
+            {/* <Sparkles className="h-4 w-4" />
+             */}
           </motion.div>
           
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1]">
             Predict Your Flat's Price with{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600 pb-2 inline-block">
+            <span className="text-primary pb-2 inline-block">
               Machine Learning
             </span>
           </h1>
@@ -62,9 +59,8 @@ export default function LandingPage() {
           >
             <Link 
               to="/predict" 
-              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-semibold text-primary-foreground bg-primary shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:shadow-primary/50 w-full sm:w-auto"
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-semibold text-primary-foreground bg-primary shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:bg-primary/90 hover:shadow-primary/50 w-full sm:w-auto"
             >
-              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary via-blue-500 to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[length:200%_100%] animate-gradient"></span>
               <span className="relative flex items-center gap-2">Predict Price <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
             </Link>
             
@@ -87,24 +83,24 @@ export default function LandingPage() {
           viewport={{ once: true, margin: "-100px" }}
           className="mx-auto grid max-w-6xl items-start gap-8 px-4 py-12 lg:grid-cols-3"
         >
-          <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-background/60 backdrop-blur-xl border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-blue-500/20 shadow-inner group-hover:scale-110 transition-transform duration-300">
+          <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-white border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
               <BrainCircuit className="h-10 w-10 text-primary" />
             </div>
             <h3 className="text-2xl font-bold mt-4">Transparent Models</h3>
             <p className="text-muted-foreground leading-relaxed">Powered by a robust scikit-learn model trained on real-world flat data for accurate insights.</p>
           </motion.div>
           
-          <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-background/60 backdrop-blur-xl border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-blue-500/20 shadow-inner group-hover:scale-110 transition-transform duration-300">
+          <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-white border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
               <BarChart3 className="h-10 w-10 text-primary" />
             </div>
             <h3 className="text-2xl font-bold mt-4">Data Visualization</h3>
             <p className="text-muted-foreground leading-relaxed">Interactive, beautiful charts showing model accuracy, residuals, and rich dataset distributions.</p>
           </motion.div>
           
-          <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-background/60 backdrop-blur-xl border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-blue-500/20 shadow-inner group-hover:scale-110 transition-transform duration-300">
+          <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-white border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
               <ShieldCheck className="h-10 w-10 text-primary" />
             </div>
             <h3 className="text-2xl font-bold mt-4">Educational Design</h3>
@@ -112,6 +108,34 @@ export default function LandingPage() {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* Footer */}
+      <footer className="w-full border-t bg-muted/30 py-12 px-4 relative z-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+          <div className="space-y-2">
+            <div className="font-bold text-xl text-primary flex items-center justify-center md:justify-start gap-2">
+              <BrainCircuit className="h-5 w-5" />
+              FlatPredict AI
+            </div>
+            <p className="text-muted-foreground text-sm max-w-sm">
+              Empowering real estate decisions with transparent, accurate machine learning models.
+            </p>
+          </div>
+          
+          <div className="flex gap-8 text-sm font-medium text-muted-foreground">
+            <Link to="/predict" className="hover:text-primary transition-colors">Predict Price</Link>
+            <Link to="/dashboard" className="hover:text-primary transition-colors">Analytics</Link>
+            <a href="https://github.com/rohitmandal2004" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">GitHub</a>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto mt-8 pt-8 border-t text-sm text-muted-foreground text-center flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p>© {new Date().getFullYear()} FlatPredict AI Lab. All rights reserved.</p>
+          <div className="flex gap-4">
+            <span className="hover:text-foreground cursor-pointer transition-colors">Privacy Policy</span>
+            <span className="hover:text-foreground cursor-pointer transition-colors">Terms of Service</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
