@@ -1,5 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import { Toaster } from 'react-hot-toast';
+import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
 import MainLayout from './layouts/MainLayout';
 import LandingPage from './pages/LandingPage';
 import PredictionPage from './pages/PredictionPage';
@@ -8,16 +11,24 @@ import MLExplorerPage from './pages/MLExplorerPage';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<LandingPage />} />
-          <Route path="predict" element={<PredictionPage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="explore" element={<MLExplorerPage />} />
-        </Route>
-      </Routes>
-    </Router>
+    <HelmetProvider>
+      <Router>
+        <Toaster position="top-right" />
+        <SignedIn>
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<LandingPage />} />
+              <Route path="predict" element={<PredictionPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="explore" element={<MLExplorerPage />} />
+            </Route>
+          </Routes>
+        </SignedIn>
+        <SignedOut>
+          <RedirectToSignIn />
+        </SignedOut>
+      </Router>
+    </HelmetProvider>
   );
 }
 

@@ -2,6 +2,8 @@ import os
 import json
 import joblib
 import pandas as pd
+from functools import lru_cache
+from datetime import datetime
 from app.schemas import PredictionRequest, ModelInfoResponse, DatasetStatsResponse
 
 class ModelService:
@@ -21,10 +23,13 @@ class ModelService:
         
         if os.path.exists(model_path):
             self.model = joblib.load(model_path)
+            mtime = os.path.getmtime(model_path)
+            self.model_version = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
         
         if os.path.exists(metadata_path):
             with open(metadata_path, 'r') as f:
                 self.metadata = json.load(f)
+                self.metadata['model_version'] = self.model_version
                 
         if os.path.exists(self.data_path):
             self.dataset = pd.read_excel(self.data_path)
@@ -32,20 +37,26 @@ class ModelService:
     def is_loaded(self):
         return self.model is not None and self.metadata is not None
 
-    def predict(self, req: PredictionRequest) -> float:
-        if not self.is_loaded():
-            raise Exception("Model not loaded")
-
+    @lru_cache(maxsize=128)
+    def _predict_cached(self, area_sqft, facing, floor, car_parking_sqft, bedrooms) -> float:
         input_data = pd.DataFrame([{
-            'Area_Sqft': req.area_sqft,
-            'Facing': req.facing,
-            'Floor': req.floor,
-            'Car_Parking_Sqft': req.car_parking_sqft,
-            'Bedrooms': req.bedrooms
+            'Area_Sqft': area_sqft,
+            'Facing': facing,
+            'Floor': floor,
+            'Car_Parking_Sqft': car_parking_sqft,
+            'Bedrooms': bedrooms
         }])
         
         prediction = self.model.predict(input_data)[0]
         return round(float(prediction), 2)
+
+    def predict(self, req: PredictionRequest) -> float:
+        if not self.is_loaded():
+            raise Exception("Model not loaded")
+
+        return self._predict_cached(
+            req.area_sqft, req.facing, req.floor, req.car_parking_sqft, req.bedrooms
+        )
 
     def get_model_info(self) -> ModelInfoResponse:
         if not self.is_loaded():

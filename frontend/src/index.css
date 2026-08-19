@@ -28,7 +28,7 @@
   }
 
   .dark {
-    --background: #0f172a;
+    --background: #000000;
     --foreground: #f8fafc;
     --primary: #3b82f6;
     --primary-foreground: #ffffff;

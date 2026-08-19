@@ -1,12 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 class PredictionRequest(BaseModel):
-    area_sqft: float
+    area_sqft: float = Field(..., gt=0, description="Area in sqft must be greater than 0")
     facing: str
-    floor: int
-    car_parking_sqft: float
-    bedrooms: int
+    floor: int = Field(..., ge=0, description="Floor cannot be negative")
+    car_parking_sqft: float = Field(..., ge=0, description="Car parking area cannot be negative")
+    bedrooms: int = Field(..., gt=0, description="Number of bedrooms must be at least 1")
 
 class PredictionResponse(BaseModel):
     predicted_price_lakh: float

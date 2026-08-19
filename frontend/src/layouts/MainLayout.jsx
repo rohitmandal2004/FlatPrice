@@ -2,6 +2,9 @@ import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Home, Calculator, BarChart3, BookOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { UserButton } from '@clerk/clerk-react';
+
+
 
 export default function MainLayout() {
   const location = useLocation();
@@ -19,34 +22,59 @@ export default function MainLayout() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calculator className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl hidden sm:inline-block">FlatPredict AI</span>
+            <span className="font-bold text-xl sm:inline-block">FlatPredict AI</span>
           </div>
           
-          <nav className="flex items-center gap-4 md:gap-6 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline-block">{item.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="flex items-center">
+            <nav className="hidden md:flex items-center gap-6">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="ml-4 flex items-center">
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 pt-8 pb-24 md:pb-8">
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-background border-t h-16 px-2 pb-[env(safe-area-inset-bottom)]">
+        {navigation.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center w-full h-full gap-1 text-xs transition-colors",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Icon className={cn("h-6 w-6", isActive && "fill-primary/20")} />
+            </Link>
+          );
+        })}
+      </nav>
 
       <footer className="border-t py-6 md:py-0">
         <div className="container mx-auto px-4 flex flex-col items-center justify-center gap-4 md:h-16 md:flex-row">

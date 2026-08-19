@@ -3,8 +3,12 @@ import { predictPrice } from '../services/api';
 import { supabase } from '../services/supabase';
 import { Calculator, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
+import toast from 'react-hot-toast';
+import { useStore } from '../hooks/useStore';
 
 export default function PredictionPage() {
+  const setLastPrediction = useStore((state) => state.setLastPrediction);
   const [formData, setFormData] = useState({
     area_sqft: 1200,
     facing: 'North',
@@ -34,6 +38,8 @@ export default function PredictionPage() {
       // API Call
       const data = await predictPrice(formData);
       setResult(data);
+      setLastPrediction(data);
+      toast.success('Prediction generated successfully!');
 
       // Try saving to supabase if authenticated (ignoring errors if not logged in)
       const { data: userData } = await supabase.auth.getUser();
@@ -46,7 +52,9 @@ export default function PredictionPage() {
         }]);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Failed to predict price');
+      const errorMsg = err.response?.data?.detail || err.message || 'Failed to predict price';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -54,6 +62,10 @@ export default function PredictionPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
+      <Helmet>
+        <title>Predict Flat Price | AI Lab</title>
+        <meta name="description" content="Get an ML-based price estimate for your flat instantly." />
+      </Helmet>
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Price Prediction</h1>
         <p className="text-muted-foreground">Enter flat details to get an ML-based price estimate.</p>
@@ -154,7 +166,18 @@ export default function PredictionPage() {
 
         {/* Result Area */}
         <div className="flex flex-col h-full">
-          {result ? (
+          {loading ? (
+            <div className="bg-card border rounded-xl p-8 shadow-sm flex flex-col justify-center items-center flex-1 space-y-6">
+              <div className="w-48 h-6 bg-muted animate-pulse rounded"></div>
+              <div className="w-64 h-16 bg-muted animate-pulse rounded"></div>
+              <div className="w-32 h-6 bg-muted animate-pulse rounded"></div>
+              <div className="w-full border-t pt-6 mt-4 space-y-4">
+                 <div className="w-full h-4 bg-muted animate-pulse rounded"></div>
+                 <div className="w-3/4 h-4 bg-muted animate-pulse rounded"></div>
+                 <div className="w-full h-4 bg-muted animate-pulse rounded"></div>
+              </div>
+            </div>
+          ) : result ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -196,3 +219,4 @@ export default function PredictionPage() {
     </div>
   );
 }
+
