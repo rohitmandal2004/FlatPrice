@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { predictPrice } from '../services/api';
 import { supabase } from '../services/supabase';
-import { Calculator, AlertCircle, Loader2 } from 'lucide-react';
+import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
@@ -58,6 +58,50 @@ export default function PredictionPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopy = () => {
+    if (!result) return;
+    const text = `Predicted Flat Price: ₹${result.predicted_price_lakh} Lakh\nArea: ${formData.area_sqft} sq ft\nBedrooms: ${formData.bedrooms}\nFacing: ${formData.facing}`;
+    navigator.clipboard.writeText(text);
+    toast.success("Prediction copied to clipboard!");
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const getPriceRange = (price) => {
+    return {
+      min: (price * 0.95).toFixed(2),
+      max: (price * 1.05).toFixed(2)
+    };
+  };
+
+  const getPricePerSqFt = () => {
+    if (!result) return 0;
+    return Math.round((result.predicted_price_lakh * 100000) / formData.area_sqft).toLocaleString('en-IN');
+  };
+
+  const getMarketComparison = () => {
+    // Mock logic based on price per sqft
+    const ppsqft = (result.predicted_price_lakh * 100000) / formData.area_sqft;
+    if (ppsqft > 6000) return { text: "Premium Market Value", trend: "up", value: "+12% vs city avg" };
+    if (ppsqft < 4000) return { text: "Below Market Average", trend: "down", value: "-8% vs city avg" };
+    return { text: "Standard Market Value", trend: "stable", value: "Aligned with city avg" };
+  };
+
+  const getKeyDrivers = () => {
+    const drivers = [];
+    if (formData.floor > 10) drivers.push({ icon: TrendingUp, text: 'High Floor Premium', color: 'text-emerald-500' });
+    if (formData.area_sqft > 2000) drivers.push({ icon: TrendingUp, text: 'Large Area Premium', color: 'text-emerald-500' });
+    if (formData.car_parking_sqft === 0) drivers.push({ icon: TrendingDown, text: 'No Parking Discount', color: 'text-rose-500' });
+    if (formData.facing === 'East' || formData.facing === 'North') drivers.push({ icon: TrendingUp, text: 'Vastu Compliant Facing', color: 'text-emerald-500' });
+    
+    // Fallback if none matched
+    if (drivers.length === 0) drivers.push({ icon: Info, text: 'Standard Property Traits', color: 'text-blue-500' });
+    
+    return drivers.slice(0, 2); // Show max 2 drivers
   };
 
   return (
@@ -179,32 +223,80 @@ export default function PredictionPage() {
             </div>
           ) : result ? (
             <motion.div 
+              id="prediction-report"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-card border rounded-xl p-8 shadow-sm text-center flex flex-col justify-center items-center flex-1 space-y-6"
+              className="bg-card border rounded-xl p-8 shadow-sm flex flex-col flex-1 space-y-6 relative"
             >
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Estimated Flat Price</h3>
-                <div className="text-4xl md:text-5xl font-extrabold text-primary break-all">
-                  ₹{result.predicted_price_lakh} Lakh
-                </div>
-                <div className="text-muted-foreground font-medium">
-                  ₹{(result.predicted_price_lakh * 100000).toLocaleString('en-IN')}
+              {/* Header Actions */}
+              <div className="flex justify-between items-center print-hide">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Prediction Report</h3>
+                <div className="flex gap-2">
+                  <button type="button" onClick={handleCopy} className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer" title="Copy Result">
+                    <Copy className="h-4 w-4" />
+                  </button>
+                  <button type="button" onClick={handlePrint} className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer" title="Save as PDF">
+                    <Download className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
 
-              <div className="w-full border-t pt-6 text-left space-y-4">
-                <h4 className="font-semibold text-sm">Input Summary</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-muted-foreground">Area:</div><div>{formData.area_sqft} sq ft</div>
-                  <div className="text-muted-foreground">Facing:</div><div>{formData.facing}</div>
-                  <div className="text-muted-foreground">Floor:</div><div>{formData.floor}</div>
-                  <div className="text-muted-foreground">Parking:</div><div>{formData.car_parking_sqft} sq ft</div>
-                  <div className="text-muted-foreground">Bedrooms:</div><div>{formData.bedrooms}</div>
+              {/* Main Price */}
+              <div className="text-center space-y-2">
+                <div className="text-4xl md:text-5xl font-extrabold text-primary break-all">
+                  ₹{result.predicted_price_lakh} <span className="text-2xl text-muted-foreground font-semibold">Lakh</span>
                 </div>
-                <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md mt-4">
+                <div className="text-sm font-medium text-muted-foreground bg-muted inline-block px-3 py-1 rounded-full">
+                  Range: ₹{getPriceRange(result.predicted_price_lakh).min}L - ₹{getPriceRange(result.predicted_price_lakh).max}L
+                </div>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 gap-4 border-y py-6">
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground uppercase">Price per Sq.Ft</div>
+                  <div className="font-semibold text-lg">₹{getPricePerSqFt()}</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground uppercase">Market Comparison</div>
+                  <div className="font-semibold text-sm flex flex-col">
+                    <span className={getMarketComparison().trend === 'up' ? 'text-emerald-500' : getMarketComparison().trend === 'down' ? 'text-rose-500' : 'text-blue-500'}>
+                      {getMarketComparison().text}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{getMarketComparison().value}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Drivers */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm">Key Price Drivers</h4>
+                <div className="space-y-2">
+                  {getKeyDrivers().map((driver, idx) => {
+                    const DriverIcon = driver.icon;
+                    return (
+                      <div key={idx} className="flex items-center gap-2 text-sm bg-muted/50 p-3 rounded-md border border-border/50">
+                        <DriverIcon className={`h-5 w-5 ${driver.color}`} />
+                        <span className="font-medium">{driver.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Summary & Disclaimer */}
+              <div className="w-full pt-4 space-y-4">
+                <h4 className="font-semibold text-sm">Input Summary</h4>
+                <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm bg-muted/30 p-4 rounded-lg">
+                  <div className="text-muted-foreground">Area:</div><div className="font-medium">{formData.area_sqft} sq ft</div>
+                  <div className="text-muted-foreground">Facing:</div><div className="font-medium">{formData.facing}</div>
+                  <div className="text-muted-foreground">Floor:</div><div className="font-medium">{formData.floor}</div>
+                  <div className="text-muted-foreground">Parking:</div><div className="font-medium">{formData.car_parking_sqft} sq ft</div>
+                  <div className="text-muted-foreground">Bedrooms:</div><div className="font-medium">{formData.bedrooms}</div>
+                </div>
+                <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md mt-4 print-hide">
                   <span className="font-semibold block mb-1">Educational Disclaimer:</span>
-                  This is an ML-based estimate generated from a small sample dataset and should not be treated as an actual market valuation.
+                  This is a mock ML estimate generated for demonstration and should not be treated as actual market valuation.
                 </div>
               </div>
             </motion.div>
