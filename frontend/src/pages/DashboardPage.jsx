@@ -3,10 +3,12 @@ import { getDatasetStats, getModelInfo, getDatasetDownloadUrl } from '../service
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { Loader2, Download, History, Trash2 } from 'lucide-react';
 import { useStore } from '../hooks/useStore';
+import HistoryPage from './HistoryPage';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [modelInfo, setModelInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,14 +82,35 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">Model performance and dataset statistics.</p>
+          <p className="text-muted-foreground">Model performance, dataset statistics, and history.</p>
         </div>
         <button onClick={handleDownloadDataset} className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4 cursor-pointer">
           <Download className="mr-2 h-4 w-4" /> Export Dataset (.xlsx)
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="flex bg-muted/50 p-1 rounded-xl w-full max-w-sm">
+        <button 
+          onClick={() => setActiveTab('overview')} 
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'overview' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Model Overview
+        </button>
+        <button 
+          onClick={() => setActiveTab('history')} 
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'history' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          My History
+        </button>
+      </div>
+
+      {activeTab === 'history' ? (
+        <div className="mt-8">
+          <HistoryPage />
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* KPI Cards */}
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
           <div className="text-sm font-medium text-muted-foreground mb-1">Dataset Records</div>
@@ -220,49 +243,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Prediction History */}
-      {history && history.length > 0 && (
-        <div className="pt-8 border-t space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="space-y-1">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <History className="h-6 w-6 text-primary" />
-                Prediction History
-              </h2>
-              <p className="text-muted-foreground">Your recent property price estimates.</p>
-            </div>
-            <button 
-              onClick={clearHistory}
-              className="inline-flex items-center text-sm text-rose-500 hover:text-rose-600 transition-colors"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear
-            </button>
-          </div>
-          
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {history.map((item) => (
-              <div key={item.id} className="bg-card border rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-2xl font-bold text-primary">₹{item.predicted_price_lakh}L</div>
-                    <div className="text-xs text-muted-foreground">{new Date(item.id).toLocaleDateString()}</div>
-                  </div>
-                  <div className="bg-muted px-2 py-1 rounded text-xs font-medium">
-                    {item.area_sqft} sq ft
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm bg-muted/30 p-3 rounded-lg">
-                  <div><span className="text-muted-foreground">Facing:</span> {item.facing}</div>
-                  <div><span className="text-muted-foreground">Floor:</span> {item.floor}</div>
-                  <div><span className="text-muted-foreground">Beds:</span> {item.bedrooms}</div>
-                  <div><span className="text-muted-foreground">Parking:</span> {item.car_parking_sqft}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

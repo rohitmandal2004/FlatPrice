@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../components/Logo';
 import { ArrowRight, BrainCircuit, BarChart3, ShieldCheck, Database, Cog, LineChart, FileOutput } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -20,7 +21,13 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col items-center relative overflow-hidden bg-white">
+    <div className="flex flex-col items-center relative overflow-hidden bg-background">
+      {/* Decorative Background Blobs */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[500px] opacity-40 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-72 h-72 bg-[#B9D175] rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+        <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-[#D9EFBD] rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-[20%] left-[30%] w-72 h-72 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
 
       {/* Hero Section */}
       <section className="w-full py-16 md:py-28 lg:py-36 xl:py-48 flex flex-col items-center text-center relative z-10">
@@ -42,7 +49,7 @@ export default function LandingPage() {
           
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1]">
             Predict Your Flat's Price with{' '}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600 pb-2 inline-block">
+            <span className="bg-[#B9D175] text-slate-800 px-4 py-1 rounded-xl pb-2 inline-block shadow-sm">
               Machine Learning
             </span>
           </h1>
@@ -115,8 +122,8 @@ export default function LandingPage() {
                 transition={{ delay: i * 0.15 }}
                 className="relative flex flex-col items-center text-center p-6 bg-background rounded-2xl shadow-sm border hover:shadow-md transition-all hover:-translate-y-1"
               >
-                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6">
-                  <step.icon className="h-7 w-7 text-indigo-600" />
+                <div className="h-14 w-14 rounded-full bg-[#D9EFBD] flex items-center justify-center mb-6">
+                  <step.icon className="h-7 w-7 text-slate-800" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">{step.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
@@ -165,9 +172,8 @@ export default function LandingPage() {
       <footer className="w-full border-t bg-muted/30 py-12 px-4 relative z-10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <div className="space-y-2">
-            <div className="font-bold text-xl text-primary flex items-center justify-center md:justify-start gap-2">
-              <BrainCircuit className="h-5 w-5" />
-              FlatPredict AI
+            <div className="flex items-center justify-center md:justify-start mb-2">
+              <Logo />
             </div>
             <p className="text-muted-foreground text-sm max-w-sm">
               Empowering real estate decisions with transparent, accurate machine learning models.

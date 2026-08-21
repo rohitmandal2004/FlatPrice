@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { predictPrice } from '../services/api';
 import { supabase } from '../services/supabase';
 import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info, IndianRupee, PieChart, LineChart as LineChartIcon } from 'lucide-react';
@@ -6,8 +7,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '../hooks/useStore';
+import toast from 'react-hot-toast';
 
 export default function PredictionPage() {
+  const { user } = useUser();
   const setLastPrediction = useStore((state) => state.setLastPrediction);
   const [formData, setFormData] = useState({
     area_sqft: 1200,
@@ -51,10 +54,9 @@ export default function PredictionPage() {
       setLastPrediction(data);
 
       // Try saving to supabase if authenticated (ignoring errors if not logged in)
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user) {
+      if (user) {
         await supabase.from('predictions').insert([{
-          user_id: userData.user.id,
+          user_id: user.id,
           ...formData,
           predicted_price_lakh: data.predicted_price_lakh,
           model_version: 'mlr-v1'
@@ -72,10 +74,33 @@ export default function PredictionPage() {
     if (!result) return;
     const text = `Predicted Flat Price: ₹${result.predicted_price_lakh} Lakh\nArea: ${formData.area_sqft} sq ft\nBedrooms: ${formData.bedrooms}\nFacing: ${formData.facing}`;
     navigator.clipboard.writeText(text);
+    toast.success("Result copied to clipboard!");
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    const element = document.getElementById('prediction-report');
+    if (!element) return;
+    
+    const toastId = toast.loading("Generating PDF Report...");
+    
+    try {
+      // Dynamically import html2pdf to avoid Vite/SSR namespace issues
+      const html2pdfModule = (await import('html2pdf.js')).default;
+      
+      const opt = {
+        margin:       10,
+        filename:     'FlatPredict_Report.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      
+      await html2pdfModule().set(opt).from(element).save();
+      toast.success("PDF downloaded successfully!", { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed: ${err.message || "Unknown error"}`, { id: toastId });
+    }
   };
 
   const getPriceRange = (price) => {
