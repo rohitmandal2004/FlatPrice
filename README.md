@@ -57,7 +57,7 @@ Create `.env` in both `backend` and `frontend` folders using the provided `.env.
 1. **Start Backend:**
    ```bash
    cd backend
-   uvicorn app.main:app --reload --port 8000
+   python -m uvicorn app.main:app --reload --port 8000
    ```
 
 2. **Start Frontend:**

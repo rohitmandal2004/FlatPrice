@@ -28,15 +28,15 @@
   }
 
   .dark {
-    --background: #000000;
+    --background: #020617;
     --foreground: #f8fafc;
-    --primary: #3b82f6;
+    --primary: #6366f1;
     --primary-foreground: #ffffff;
-    --card: #1e293b;
+    --card: #0f172a;
     --card-foreground: #f8fafc;
-    --muted: #334155;
+    --muted: #1e293b;
     --muted-foreground: #94a3b8;
-    --border: #334155;
+    --border: #1e293b;
   }
 }
 

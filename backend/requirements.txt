@@ -10,3 +10,6 @@ pydantic
 python-dotenv
 
 gunicorn
+
+matplotlib
+seaborn

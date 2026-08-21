@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BrainCircuit, BarChart3, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BrainCircuit, BarChart3, ShieldCheck, Database, Cog, LineChart, FileOutput } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function LandingPage() {
@@ -42,7 +42,7 @@ export default function LandingPage() {
           
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1]">
             Predict Your Flat's Price with{' '}
-            <span className="text-primary pb-2 inline-block">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600 pb-2 inline-block">
               Machine Learning
             </span>
           </h1>
@@ -72,6 +72,58 @@ export default function LandingPage() {
             </Link>
           </motion.div>
         </motion.div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="w-full py-16 md:py-24 bg-muted/30 border-y relative z-10">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+              Our prediction engine uses a transparent, 4-step Machine Learning pipeline to calculate the true value of your property.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-8">
+            {[
+              {
+                icon: Database,
+                title: "1. Data Collection",
+                desc: "We gathered a robust dataset of real-world flat prices, including crucial features like area, facing direction, and floor level."
+              },
+              {
+                icon: Cog,
+                title: "2. Preprocessing",
+                desc: "Raw data is cleaned. Categorical data (like 'Facing') is One-Hot Encoded, and numerical data is scaled using StandardScaler."
+              },
+              {
+                icon: LineChart,
+                title: "3. Model Training",
+                desc: "A Multiple Linear Regression model learns the mathematical relationship between these features and the final price."
+              },
+              {
+                icon: FileOutput,
+                title: "4. Instant Prediction",
+                desc: "When you enter your flat's details, the trained model instantly computes the estimated market value in Lakhs."
+              }
+            ].map((step, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="relative flex flex-col items-center text-center p-6 bg-background rounded-2xl shadow-sm border hover:shadow-md transition-all hover:-translate-y-1"
+              >
+                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6">
+                  <step.icon className="h-7 w-7 text-indigo-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Features Section */}
@@ -125,7 +177,7 @@ export default function LandingPage() {
           <div className="flex gap-8 text-sm font-medium text-muted-foreground">
             <Link to="/predict" className="hover:text-primary transition-colors">Predict Price</Link>
             <Link to="/dashboard" className="hover:text-primary transition-colors">Analytics</Link>
-            <a href="https://github.com/rohitmandal2004" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">GitHub</a>
+            <a href="https://github.com/rohitmandal2004/FlatPrice" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">GitHub</a>
           </div>
         </div>
         <div className="max-w-6xl mx-auto mt-8 pt-8 border-t text-sm text-muted-foreground text-center flex flex-col sm:flex-row justify-between items-center gap-4">

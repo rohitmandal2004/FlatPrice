@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 
 class PredictionRequest(BaseModel):
     area_sqft: float = Field(..., gt=0, description="Area in sqft must be greater than 0")
-    facing: str
+    facing: Literal["North", "South", "East", "West"]
     floor: int = Field(..., ge=0, description="Floor cannot be negative")
     car_parking_sqft: float = Field(..., ge=0, description="Car parking area cannot be negative")
     bedrooms: int = Field(..., gt=0, description="Number of bedrooms must be at least 1")

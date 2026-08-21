@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
@@ -58,7 +58,7 @@ def train_model():
 
     preprocessor = ColumnTransformer(
         transformers=[
-            ('num', 'passthrough', numeric_features),
+            ('num', StandardScaler(), numeric_features),
             ('cat', OneHotEncoder(drop='first', sparse_output=False), categorical_features)
         ])
 
