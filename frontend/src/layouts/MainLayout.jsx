@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Home, Calculator, BarChart3, BookOpen, History } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { UserButton } from '@clerk/clerk-react';
+import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import Logo from '../components/Logo';
 
 
@@ -46,7 +46,16 @@ export default function MainLayout() {
               })}
             </nav>
             <div className="ml-4 flex items-center">
-              <UserButton afterSignOutUrl="/" />
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </SignedOut>
             </div>
           </div>
         </div>

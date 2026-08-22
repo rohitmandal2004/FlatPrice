@@ -14,20 +14,33 @@ function App() {
   return (
     <HelmetProvider>
       <Router>
-        <SignedIn>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<LandingPage />} />
-              <Route path="predict" element={<PredictionPage />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="explore" element={<MLExplorerPage />} />
-              <Route path="history" element={<HistoryPage />} />
-            </Route>
-          </Routes>
-        </SignedIn>
-        <SignedOut>
-          <RedirectToSignIn />
-        </SignedOut>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            {/* Public Routes */}
+            <Route index element={<LandingPage />} />
+            <Route path="explore" element={<MLExplorerPage />} />
+
+            {/* Protected Routes */}
+            <Route path="predict" element={
+              <>
+                <SignedIn><PredictionPage /></SignedIn>
+                <SignedOut><RedirectToSignIn /></SignedOut>
+              </>
+            } />
+            <Route path="dashboard" element={
+              <>
+                <SignedIn><DashboardPage /></SignedIn>
+                <SignedOut><RedirectToSignIn /></SignedOut>
+              </>
+            } />
+            <Route path="history" element={
+              <>
+                <SignedIn><HistoryPage /></SignedIn>
+                <SignedOut><RedirectToSignIn /></SignedOut>
+              </>
+            } />
+          </Route>
+        </Routes>
         <Toaster position="top-right" />
       </Router>
     </HelmetProvider>
