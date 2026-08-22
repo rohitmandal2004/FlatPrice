@@ -1,29 +1,31 @@
 {
-    "model_name": "Multiple Linear Regression",
-    "model_version": "mlr-v1",
+    "model_name": "Multiple Linear Regression (Manual Pandas Encoding)",
+    "model_version": "mlr-v2",
     "features": [
         "Area_Sqft",
         "Floor",
         "Car_Parking_Sqft",
         "Bedrooms",
+        "Facing_East",
         "Facing_North",
         "Facing_South",
         "Facing_West"
     ],
-    "training_samples": 80,
-    "testing_samples": 20,
-    "r2_score": 0.9978752157731158,
-    "mae": 0.6312681092674797,
-    "mse": 0.6442930091575363,
-    "rmse": 0.8026786462573526,
-    "intercept": 77.88999933829248,
+    "training_samples": 100,
+    "testing_samples": 100,
+    "r2_score": 0.9956721707685023,
+    "mae": 0.933452197357398,
+    "mse": 1.7076558157157438,
+    "rmse": 1.3067730544037643,
+    "intercept": -13.896020838369893,
     "coefficients": {
-        "Area_Sqft": 16.81920559951947,
-        "Floor": 1.2306476286414483,
-        "Car_Parking_Sqft": 0.6886821043841389,
-        "Bedrooms": 0.7308255984792742,
-        "Facing_North": -0.10120757622310758,
-        "Facing_South": 1.028477592595534,
-        "Facing_West": 0.23424750149680632
+        "Area_Sqft": 0.061393532709678615,
+        "Floor": 0.40475807775931,
+        "Car_Parking_Sqft": 0.0252938640733269,
+        "Bedrooms": 0.9598800538658917,
+        "Facing_East": -0.24730984423534563,
+        "Facing_North": -0.3575507136148066,
+        "Facing_South": 0.572669656241898,
+        "Facing_West": 0.03219090160825416
     }
 }

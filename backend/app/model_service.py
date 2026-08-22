@@ -47,6 +47,12 @@ class ModelService:
             'Bedrooms': bedrooms
         }])
         
+        # Apply the manual get_dummies encoding logic
+        input_data = pd.get_dummies(input_data, columns=["Facing"], dtype=int)
+        
+        # Ensure exact same columns as the training data using the features list saved in metadata
+        input_data = input_data.reindex(columns=self.metadata['features'], fill_value=0)
+        
         prediction = self.model.predict(input_data)[0]
         return round(float(prediction), 2)
 
