@@ -35,3 +35,4 @@ class DatasetStatsResponse(BaseModel):
     average_area: float
     bedroom_distribution: dict[str, int]
     facing_distribution: dict[str, int]
+    scatter_data: list[dict]

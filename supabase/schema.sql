@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Predictions Table
 CREATE TABLE IF NOT EXISTS predictions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL, -- Changed to TEXT to support Clerk string IDs like 'user_...'
     area_sqft NUMERIC NOT NULL,
     facing TEXT NOT NULL,
     floor INTEGER NOT NULL,
@@ -38,17 +38,7 @@ CREATE TABLE IF NOT EXISTS prediction_feedback (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Row Level Security (RLS) Policies
-ALTER TABLE predictions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE prediction_feedback ENABLE ROW LEVEL SECURITY;
-
--- Users can only view and manage their own predictions
-CREATE POLICY "Users can insert their own predictions" ON predictions FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can view their own predictions" ON predictions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own predictions" ON predictions FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete their own predictions" ON predictions FOR DELETE USING (auth.uid() = user_id);
-
--- Users can only view and manage their own feedback (via prediction)
-CREATE POLICY "Users can manage their own feedback" ON prediction_feedback FOR ALL USING (
-    EXISTS (SELECT 1 FROM predictions WHERE id = prediction_id AND user_id = auth.uid())
-);
+-- Disable RLS for now since we are using Clerk for auth, not Supabase Auth
+-- (Proper RLS with Clerk requires setting up custom JWT templates in Clerk)
+ALTER TABLE predictions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE prediction_feedback DISABLE ROW LEVEL SECURITY;

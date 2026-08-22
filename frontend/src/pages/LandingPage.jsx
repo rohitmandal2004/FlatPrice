@@ -31,13 +31,13 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="w-full py-16 md:py-28 lg:py-36 xl:py-48 flex flex-col items-center text-center relative z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-[900px] space-y-8 px-4 flex flex-col items-center"
         >
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -46,33 +46,33 @@ export default function LandingPage() {
             {/* <Sparkles className="h-4 w-4" />
              */}
           </motion.div>
-          
+
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1]">
             Predict Your Flat's Price with{' '}
             <span className="bg-[#B9D175] text-slate-800 px-4 py-1 rounded-xl pb-2 inline-block shadow-sm">
               Machine Learning
             </span>
           </h1>
-          
+
           <p className="mx-auto max-w-[650px] text-muted-foreground md:text-xl leading-relaxed">
             Harness the power of Multiple Linear Regression. Instantly estimate property values based on key characteristics like area, floor, and facing direction.
           </p>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
             className="flex flex-col sm:flex-row justify-center gap-4 mt-8 w-full px-4 sm:px-0"
           >
-            <Link 
-              to="/predict" 
+            <Link
+              to="/predict"
               className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-semibold text-primary-foreground bg-primary shadow-lg shadow-primary/30 transition-all hover:scale-105 hover:bg-primary/90 hover:shadow-primary/50 w-full sm:w-auto"
             >
               <span className="relative flex items-center gap-2">Predict Price <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
             </Link>
-            
-            <Link 
-              to="/dashboard" 
+
+            <Link
+              to="/dashboard"
               className="inline-flex items-center justify-center rounded-full border-2 border-input bg-background/50 backdrop-blur-md px-8 py-3.5 font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-all hover:scale-105 w-full sm:w-auto"
             >
               Explore Dashboard
@@ -114,7 +114,7 @@ export default function LandingPage() {
                 desc: "When you enter your flat's details, the trained model instantly computes the estimated market value in Lakhs."
               }
             ].map((step, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -135,7 +135,7 @@ export default function LandingPage() {
 
       {/* Features Section */}
       <section className="w-full py-16 md:py-24 mb-16 relative z-10">
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -149,7 +149,7 @@ export default function LandingPage() {
             <h3 className="text-2xl font-bold mt-4">Transparent Models</h3>
             <p className="text-muted-foreground leading-relaxed">Powered by a robust scikit-learn model trained on real-world flat data for accurate insights.</p>
           </motion.div>
-          
+
           <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-white border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
               <BarChart3 className="h-10 w-10 text-primary" />
@@ -157,7 +157,7 @@ export default function LandingPage() {
             <h3 className="text-2xl font-bold mt-4">Data Visualization</h3>
             <p className="text-muted-foreground leading-relaxed">Interactive, beautiful charts showing model accuracy, residuals, and rich dataset distributions.</p>
           </motion.div>
-          
+
           <motion.div variants={itemVariants} className="group flex flex-col items-center space-y-4 text-center rounded-3xl bg-white border shadow-xl p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/20">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
               <ShieldCheck className="h-10 w-10 text-primary" />
@@ -179,7 +179,7 @@ export default function LandingPage() {
               Empowering real estate decisions with transparent, accurate machine learning models.
             </p>
           </div>
-          
+
           <div className="flex gap-8 text-sm font-medium text-muted-foreground">
             <Link to="/predict" className="hover:text-primary transition-colors">Predict Price</Link>
             <Link to="/dashboard" className="hover:text-primary transition-colors">Analytics</Link>

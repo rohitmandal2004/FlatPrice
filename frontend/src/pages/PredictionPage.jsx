@@ -80,21 +80,21 @@ export default function PredictionPage() {
   const handlePrint = async () => {
     const element = document.getElementById('prediction-report');
     if (!element) return;
-    
+
     const toastId = toast.loading("Generating PDF Report...");
-    
+
     try {
       // Dynamically import html2pdf to avoid Vite/SSR namespace issues
       const html2pdfModule = (await import('html2pdf.js')).default;
-      
+
       const opt = {
-        margin:       10,
-        filename:     'FlatPredict_Report.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: 10,
+        filename: 'FlatPredict_Report.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
-      
+
       await html2pdfModule().set(opt).from(element).save();
       toast.success("PDF downloaded successfully!", { id: toastId });
     } catch (err) {
@@ -129,10 +129,10 @@ export default function PredictionPage() {
     if (formData.area_sqft > 2000) drivers.push({ icon: TrendingUp, text: 'Large Area Premium', color: 'text-emerald-500' });
     if (formData.car_parking_sqft === 0) drivers.push({ icon: TrendingDown, text: 'No Parking Discount', color: 'text-rose-500' });
     if (formData.facing === 'East' || formData.facing === 'North') drivers.push({ icon: TrendingUp, text: 'Vastu Compliant Facing', color: 'text-emerald-500' });
-    
+
     // Fallback if none matched
     if (drivers.length === 0) drivers.push({ icon: Info, text: 'Standard Property Traits', color: 'text-blue-500' });
-    
+
     return drivers.slice(0, 2); // Show max 2 drivers
   };
 
@@ -196,10 +196,10 @@ export default function PredictionPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Area (sq ft)</label>
-                <input 
-                  type="number" 
-                  name="area_sqft" 
-                  value={formData.area_sqft} 
+                <input
+                  type="number"
+                  name="area_sqft"
+                  value={formData.area_sqft}
                   onChange={handleChange}
                   min="100"
                   required
@@ -209,9 +209,9 @@ export default function PredictionPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Facing</label>
-                <select 
-                  name="facing" 
-                  value={formData.facing} 
+                <select
+                  name="facing"
+                  value={formData.facing}
                   onChange={handleChange}
                   className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
@@ -224,10 +224,10 @@ export default function PredictionPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Floor</label>
-                <input 
-                  type="number" 
-                  name="floor" 
-                  value={formData.floor} 
+                <input
+                  type="number"
+                  name="floor"
+                  value={formData.floor}
                   onChange={handleChange}
                   min="0"
                   required
@@ -237,10 +237,10 @@ export default function PredictionPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Car Parking Area (sq ft)</label>
-                <input 
-                  type="number" 
-                  name="car_parking_sqft" 
-                  value={formData.car_parking_sqft} 
+                <input
+                  type="number"
+                  name="car_parking_sqft"
+                  value={formData.car_parking_sqft}
                   onChange={handleChange}
                   min="0"
                   required
@@ -250,9 +250,9 @@ export default function PredictionPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Bedrooms</label>
-                <select 
-                  name="bedrooms" 
-                  value={formData.bedrooms} 
+                <select
+                  name="bedrooms"
+                  value={formData.bedrooms}
                   onChange={handleChange}
                   className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
@@ -265,8 +265,8 @@ export default function PredictionPage() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
             >
@@ -291,13 +291,13 @@ export default function PredictionPage() {
               <div className="w-64 h-16 bg-muted animate-pulse rounded"></div>
               <div className="w-32 h-6 bg-muted animate-pulse rounded"></div>
               <div className="w-full border-t pt-6 mt-4 space-y-4">
-                 <div className="w-full h-4 bg-muted animate-pulse rounded"></div>
-                 <div className="w-3/4 h-4 bg-muted animate-pulse rounded"></div>
-                 <div className="w-full h-4 bg-muted animate-pulse rounded"></div>
+                <div className="w-full h-4 bg-muted animate-pulse rounded"></div>
+                <div className="w-3/4 h-4 bg-muted animate-pulse rounded"></div>
+                <div className="w-full h-4 bg-muted animate-pulse rounded"></div>
               </div>
             </div>
           ) : result ? (
-            <motion.div 
+            <motion.div
               id="prediction-report"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -371,11 +371,11 @@ export default function PredictionPage() {
                     <span className="font-medium text-foreground">{sliderArea} sq ft</span>
                     <span>{formData.area_sqft + 1000} sq ft</span>
                   </div>
-                  <input 
-                    type="range" 
-                    min={Math.max(500, formData.area_sqft - 500)} 
-                    max={formData.area_sqft + 1000} 
-                    value={sliderArea} 
+                  <input
+                    type="range"
+                    min={Math.max(500, formData.area_sqft - 500)}
+                    max={formData.area_sqft + 1000}
+                    value={sliderArea}
                     onChange={(e) => setSliderArea(Number(e.target.value))}
                     className="w-full accent-primary"
                   />
@@ -432,21 +432,21 @@ export default function PredictionPage() {
                     <span className="text-muted-foreground">Down Payment</span>
                     <span className="font-medium">{emiState.downPayment}% (₹{((result.predicted_price_lakh * emiState.downPayment) / 100).toFixed(2)}L)</span>
                   </div>
-                  <input type="range" min="10" max="90" step="5" value={emiState.downPayment} onChange={(e) => setEmiState({...emiState, downPayment: Number(e.target.value)})} className="w-full accent-primary" />
+                  <input type="range" min="10" max="90" step="5" value={emiState.downPayment} onChange={(e) => setEmiState({ ...emiState, downPayment: Number(e.target.value) })} className="w-full accent-primary" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Interest Rate</span>
                     <span className="font-medium">{emiState.interestRate}%</span>
                   </div>
-                  <input type="range" min="5" max="15" step="0.1" value={emiState.interestRate} onChange={(e) => setEmiState({...emiState, interestRate: Number(e.target.value)})} className="w-full accent-primary" />
+                  <input type="range" min="5" max="15" step="0.1" value={emiState.interestRate} onChange={(e) => setEmiState({ ...emiState, interestRate: Number(e.target.value) })} className="w-full accent-primary" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Loan Tenure</span>
                     <span className="font-medium">{emiState.tenure} Years</span>
                   </div>
-                  <input type="range" min="5" max="30" step="1" value={emiState.tenure} onChange={(e) => setEmiState({...emiState, tenure: Number(e.target.value)})} className="w-full accent-primary" />
+                  <input type="range" min="5" max="30" step="1" value={emiState.tenure} onChange={(e) => setEmiState({ ...emiState, tenure: Number(e.target.value) })} className="w-full accent-primary" />
                 </div>
                 <div className="pt-4 border-t text-center space-y-1">
                   <div className="text-sm text-muted-foreground uppercase">Estimated Monthly EMI</div>
@@ -467,14 +467,14 @@ export default function PredictionPage() {
                     <span className="text-muted-foreground">Holding Period</span>
                     <span className="font-medium">{roiState.holdYears} Years</span>
                   </div>
-                  <input type="range" min="1" max="20" step="1" value={roiState.holdYears} onChange={(e) => setRoiState({...roiState, holdYears: Number(e.target.value)})} className="w-full accent-emerald-500" />
+                  <input type="range" min="1" max="20" step="1" value={roiState.holdYears} onChange={(e) => setRoiState({ ...roiState, holdYears: Number(e.target.value) })} className="w-full accent-emerald-500" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Expected Appreciation</span>
                     <span className="font-medium">{roiState.appreciationRate}% / yr</span>
                   </div>
-                  <input type="range" min="2" max="15" step="0.5" value={roiState.appreciationRate} onChange={(e) => setRoiState({...roiState, appreciationRate: Number(e.target.value)})} className="w-full accent-emerald-500" />
+                  <input type="range" min="2" max="15" step="0.5" value={roiState.appreciationRate} onChange={(e) => setRoiState({ ...roiState, appreciationRate: Number(e.target.value) })} className="w-full accent-emerald-500" />
                 </div>
                 <div className="pt-8 border-t text-center space-y-1">
                   <div className="text-sm text-muted-foreground uppercase">Future Est. Value</div>
@@ -498,7 +498,7 @@ export default function PredictionPage() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} domain={['dataMin - 5', 'dataMax + 5']} />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value) => [`₹${value} L`, 'Price']}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />

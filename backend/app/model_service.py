@@ -68,6 +68,18 @@ class ModelService:
             raise Exception("Dataset not loaded")
             
         df = self.dataset
+        
+        # Prepare scatter data for Area vs Price (limit to 200 points for performance if dataset is large)
+        scatter_sample = df.sample(n=min(200, len(df))) if len(df) > 200 else df
+        scatter_data = [
+            {
+                "area": float(row['Area_Sqft']),
+                "price": float(round(row['Price_Lakh'], 2)),
+                "z": int(row.get('Bedrooms', 2) * 20) # Use bedrooms as a size indicator for z-axis
+            }
+            for _, row in scatter_sample.iterrows()
+        ]
+
         return DatasetStatsResponse(
             number_of_records=int(len(df)),
             average_price=float(round(df['Price_Lakh'].mean(), 2)),
@@ -75,7 +87,8 @@ class ModelService:
             max_price=float(round(df['Price_Lakh'].max(), 2)),
             average_area=float(round(df['Area_Sqft'].mean(), 2)),
             bedroom_distribution={str(k): int(v) for k, v in df['Bedrooms'].value_counts().items()},
-            facing_distribution={str(k): int(v) for k, v in df['Facing'].value_counts().items()}
+            facing_distribution={str(k): int(v) for k, v in df['Facing'].value_counts().items()},
+            scatter_data=scatter_data
         )
 
 model_service = ModelService()

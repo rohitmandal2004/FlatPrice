@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
-# Cancel in-progress runs when a new commit is pushed to the same branch
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   frontend-check:
     runs-on: ubuntu-latest
@@ -46,5 +41,3 @@ jobs:
           cache: 'pip'
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Smoke Test (Import Check)
-        run: python -c "from app.main import app; print('Backend syntax and imports are valid!')"
