@@ -409,11 +409,11 @@ const Building = ({ formData, onSelectFlat, numFloors = 10 }) => {
 
 export default function Building3D({ formData, onSelectFlat }) {
   return (
-    <div className="w-full h-full min-h-[500px] bg-gradient-to-t from-slate-300 to-sky-100 rounded-2xl overflow-hidden border border-slate-200 relative group cursor-grab active:cursor-grabbing shadow-inner">
+    <div className="w-full h-[50vh] min-h-[350px] lg:h-full lg:min-h-[500px] bg-gradient-to-t from-slate-300 to-sky-100 rounded-2xl overflow-hidden border border-slate-200 relative group cursor-grab active:cursor-grabbing shadow-inner">
       <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-slate-700 pointer-events-none transition-opacity group-hover:opacity-100 opacity-70">
         Select Floor & Facing (Rotate & Click)
       </div>
-      <Canvas shadows camera={{ position: [18, 16, 24], fov: 40 }}>
+      <Canvas shadows camera={{ position: [25, 20, 32], fov: 45 }}>
         <React.Suspense fallback={null}>
           <Environment resolution={256} background={false}>
             <mesh>
@@ -449,8 +449,8 @@ export default function Building3D({ formData, onSelectFlat }) {
             target={[0, 4, 0]}
             minPolarAngle={Math.PI / 8} 
             maxPolarAngle={Math.PI / 2 - 0.05} 
-            minDistance={10}
-            maxDistance={40}
+            minDistance={15}
+            maxDistance={55}
             autoRotate
             autoRotateSpeed={0.4}
           />

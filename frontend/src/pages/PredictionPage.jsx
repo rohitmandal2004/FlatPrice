@@ -3,12 +3,15 @@ import { useUser } from '@clerk/clerk-react';
 import { predictPrice } from '../services/api';
 import { supabase } from '../services/supabase';
 import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info, IndianRupee, PieChart, LineChart as LineChartIcon, View, ZoomIn, ZoomOut, X, Maximize2 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '../hooks/useStore';
 import toast from 'react-hot-toast';
+import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
 import Building3D from '../components/Building3D';
+import Logo from '../components/Logo';
 
 export default function PredictionPage() {
   const { user } = useUser();
@@ -86,19 +89,36 @@ export default function PredictionPage() {
     const element = document.getElementById('prediction-report');
     if (!element) return;
     const toastId = toast.loading("Generating PDF Report...");
+    
+    const originalClasses = element.className;
+    element.classList.remove('backdrop-blur-2xl', 'bg-white/90', 'border-white', 'shadow-xl');
+    element.classList.add('bg-white', 'border-slate-200');
+    
     try {
-      const html2pdfModule = (await import('html2pdf.js')).default;
-      const opt = {
-        margin: 10,
-        filename: 'FlatPredict_Report.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-      await html2pdfModule().set(opt).from(element).save();
+      const dataUrl = await toPng(element, { 
+        quality: 1, 
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
+      });
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (element.offsetHeight * pdfWidth) / element.offsetWidth;
+      
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('FlatPredict_Report.pdf');
+      
       toast.success("PDF downloaded successfully!", { id: toastId });
     } catch (err) {
-      toast.error(`Failed: ${err.message || "Unknown error"}`, { id: toastId });
+      toast.error(`Failed to generate PDF`, { id: toastId });
+      console.error(err);
+    } finally {
+      element.className = originalClasses;
     }
   };
 
@@ -124,10 +144,10 @@ export default function PredictionPage() {
     let amenities = total - (baseVal + floorPrem + facePrem + parkingPrem);
     
     return [
-      { label: "Base Property Value", value: baseVal, color: "bg-slate-800" },
-      { label: `Floor Premium (Fl ${formData.floor})`, value: floorPrem, color: "bg-emerald-500" },
-      { label: `${formData.facing} Facing Premium`, value: facePrem, color: "bg-blue-500" },
-      { label: "Parking & Amenities", value: parkingPrem + amenities, color: "bg-teal-400" },
+      { label: "Base Property Value", value: baseVal, color: "bg-slate-800", hex: "#1e293b" },
+      { label: `Floor Premium (Fl ${formData.floor})`, value: floorPrem, color: "bg-emerald-500", hex: "#10b981" },
+      { label: `${formData.facing} Facing Premium`, value: facePrem, color: "bg-blue-500", hex: "#3b82f6" },
+      { label: "Parking & Amenities", value: parkingPrem + amenities, color: "bg-teal-400", hex: "#2dd4bf" },
     ].filter(item => item.value > 0);
   };
 
@@ -208,7 +228,7 @@ export default function PredictionPage() {
                   <label className="block text-sm font-bold mb-2">Area (sq ft)</label>
                   <input type="number" name="area_sqft" value={formData.area_sqft} onChange={handleChange} min="100" required className="w-full h-12 rounded-xl border border-input/60 px-4" />
                 </div>
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="group/input">
                     <label className="block text-sm font-bold mb-2">Facing</label>
                     <select name="facing" value={formData.facing} onChange={handleChange} className="w-full h-12 rounded-xl border border-input/60 px-4">
@@ -257,13 +277,16 @@ export default function PredictionPage() {
           ) : result ? (
             <motion.div id="prediction-report" className="bg-white/90 backdrop-blur-2xl border border-white shadow-xl rounded-[2rem] p-6 sm:p-8 space-y-6 relative overflow-hidden">
                 {/* Top Action Bar */}
-                <div className="flex justify-between items-center w-full pb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse"></div>
-                    <span className="font-bold text-[10px] tracking-widest text-slate-500 uppercase">Valuation Report</span>
-                    <div className="ml-1 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">AI Confidence 94%</span>
+                <div className="flex justify-between items-start w-full pb-2 border-b border-slate-100/60 mb-4">
+                  <div className="flex flex-col gap-4">
+                    <Logo className="scale-75 origin-top-left -ml-1" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse"></div>
+                      <span className="font-bold text-[10px] tracking-widest text-slate-500 uppercase">Valuation Report</span>
+                      <div className="ml-1 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">AI Confidence 94%</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -295,22 +318,52 @@ export default function PredictionPage() {
                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <PieChart className="w-3.5 h-3.5" /> Value Breakdown
                   </h3>
-                  <div className="space-y-2">
-                    {getPriceBreakdown().map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-1.5 hover:bg-slate-50 rounded-md transition-colors">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-2 h-2 rounded-full ${item.color}`}></div>
-                          <span className="text-xs font-semibold text-slate-600">{item.label}</span>
-                        </div>
-                        <span className="text-xs font-bold text-slate-800">₹{item.value.toFixed(2)} L</span>
+                  <div className="flex flex-col sm:flex-row items-center gap-8 mt-6">
+                    <div className="w-56 h-56 flex-shrink-0 relative drop-shadow-xl">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPieChart>
+                          <Pie
+                            data={getPriceBreakdown()}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={95}
+                            paddingAngle={5}
+                            cornerRadius={8}
+                            dataKey="value"
+                            stroke="none"
+                            isAnimationActive={true}
+                            animationDuration={1500}
+                            animationEasing="ease-out"
+                          >
+                            {getPriceBreakdown().map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.hex} className="hover:opacity-80 transition-opacity duration-300 cursor-pointer" />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value) => [`₹${value.toFixed(2)} L`, 'Value']}
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+                            itemStyle={{ color: '#1e293b' }}
+                          />
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Value</span>
+                        <span className="text-xl font-black text-slate-800 drop-shadow-sm">₹{result.predicted_price_lakh} L</span>
                       </div>
-                    ))}
-                  </div>
-                  {/* Visual Bar */}
-                  <div className="flex w-full h-1.5 rounded-full overflow-hidden mt-4 bg-slate-100">
-                    {getPriceBreakdown().map((item, idx) => (
-                      <div key={idx} className={`h-full ${item.color} transition-all duration-1000 ease-out`} style={{ width: `${(item.value / result.predicted_price_lakh) * 100}%` }}></div>
-                    ))}
+                    </div>
+                    
+                    <div className="flex-1 w-full space-y-3">
+                      {getPriceBreakdown().map((item, idx) => (
+                        <div key={idx} className="group flex items-center justify-between p-3 hover:bg-slate-50/80 rounded-xl transition-all duration-300 border border-transparent hover:border-slate-100 hover:shadow-sm cursor-pointer">
+                          <div className="flex items-center gap-4">
+                            <div className="w-4 h-4 rounded-full shadow-inner transform group-hover:scale-110 transition-transform duration-300" style={{ backgroundColor: item.hex }}></div>
+                            <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">{item.label}</span>
+                          </div>
+                          <span className="text-sm font-black text-slate-800">₹{item.value.toFixed(2)} L</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -326,7 +379,7 @@ export default function PredictionPage() {
                     {formData.bedrooms} BHK Layout
                   </div>
                   <img 
-                    src={`/floor_plan_${formData.bedrooms > 3 ? 3 : formData.bedrooms}bhk.jpg`} 
+                    src={`/floor_plan_${formData.bedrooms}bhk.jpg`} 
                     alt={`${formData.bedrooms} BHK Floor Plan`} 
                     className="w-full h-auto object-contain max-h-[28rem] group-hover:scale-[1.02] transition-transform duration-500"
                   />
@@ -525,7 +578,7 @@ export default function PredictionPage() {
           <div className="flex-1 w-full h-full relative flex items-center justify-center p-4 overflow-auto">
             <div className="min-w-full min-h-full flex items-center justify-center">
               <img 
-                src={`/floor_plan_${formData.bedrooms > 3 ? 3 : formData.bedrooms}bhk.jpg`} 
+                src={`/floor_plan_${formData.bedrooms}bhk.jpg`} 
                 alt={`${formData.bedrooms} BHK Floor Plan`} 
                 className="max-w-none transition-transform duration-200"
                 style={{ transform: `scale(${zoomScale})`, transformOrigin: 'center center' }}
