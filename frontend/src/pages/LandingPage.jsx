@@ -30,60 +30,49 @@ export default function LandingPage() {
       </div>
 
       {/* Hero Section */}
-      <section className="w-full pt-20 pb-16 md:pt-32 md:pb-24 lg:pt-40 lg:pb-32 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="space-y-8 text-center lg:text-left flex flex-col items-center lg:items-start"
-          >
-            <h1 className="text-5xl font-black tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl leading-[1.1] text-foreground">
-              Predict Flat Prices with{' '}
-              <span className="relative whitespace-nowrap">
-                <span className="absolute -inset-2 bg-gradient-to-r from-primary to-emerald-400 opacity-20 blur-2xl rounded-full"></span>
-                <span className="relative bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-600 drop-shadow-sm">
-                  Machine Learning
-                </span>
+      <section className="w-full py-20 md:py-32 lg:py-40 flex flex-col items-center text-center relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="max-w-[1000px] space-y-10 px-4 flex flex-col items-center"
+        >
+          <h1 className="text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1] text-foreground">
+            Predict Flat Prices with{' '}
+            <span className="relative whitespace-nowrap">
+              <span className="absolute -inset-2 bg-gradient-to-r from-primary to-emerald-400 opacity-20 blur-2xl rounded-full"></span>
+              <span className="relative bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-600 drop-shadow-sm">
+                Machine Learning
               </span>
-            </h1>
+            </span>
+          </h1>
 
-            <p className="text-muted-foreground md:text-xl lg:text-2xl leading-relaxed font-medium max-w-[600px]">
-              Harness the power of Multiple Linear Regression. Instantly estimate property values based on key characteristics with AI-driven accuracy.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-5 mt-6 w-full sm:w-auto">
-              <Link
-                to="/predict"
-                className="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl p-4 px-8 font-bold text-lg text-primary-foreground bg-primary shadow-[0_8px_30px_rgb(185,209,117,0.4)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_40px_rgb(185,209,117,0.6)] w-full sm:w-auto"
-              >
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-                <span className="relative flex items-center gap-2">Get Started <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
-              </Link>
-
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center justify-center rounded-2xl border border-input/50 bg-white/40 backdrop-blur-xl px-8 py-4 font-semibold text-lg shadow-sm hover:bg-white/60 transition-all hover:-translate-y-1 w-full sm:w-auto"
-              >
-                Explore Dashboard
-              </Link>
-            </div>
-          </motion.div>
+          <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl lg:text-2xl leading-relaxed font-medium">
+            Harness the power of Multiple Linear Regression. Instantly estimate property values based on key characteristics with AI-driven accuracy.
+          </p>
 
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="relative hidden md:block"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="flex flex-col sm:flex-row justify-center gap-5 mt-10 w-full px-4 sm:px-0"
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/30 to-blue-400/30 rounded-[3rem] blur-3xl -z-10"></div>
-            <img 
-              src="/building_ad.jpg" 
-              alt="Skyline Heights Residential Tower" 
-              className="w-full max-w-[600px] mx-auto rounded-[3rem] shadow-2xl border-4 border-white/80 object-cover rotate-2 hover:rotate-0 transition-transform duration-500"
-            />
+            <Link
+              to="/predict"
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl p-4 px-8 font-bold text-lg text-primary-foreground bg-primary shadow-[0_8px_30px_rgb(185,209,117,0.4)] transition-all hover:-translate-y-1 hover:shadow-[0_8px_40px_rgb(185,209,117,0.6)] w-full sm:w-auto"
+            >
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+              <span className="relative flex items-center gap-2">Get Started <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
+            </Link>
+
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center justify-center rounded-2xl border border-input/50 bg-white/40 backdrop-blur-xl px-8 py-4 font-semibold text-lg shadow-sm hover:bg-white/60 transition-all hover:-translate-y-1 w-full sm:w-auto"
+            >
+              Explore Dashboard
+            </Link>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* How It Works Section */}
