@@ -40,11 +40,13 @@
   }
 }
 
-body {
+html, body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Custom Scrollbar for modern look */

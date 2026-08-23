@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDatasetStats, getModelInfo, getDatasetDownloadUrl } from '../services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Scatter, Line, ZAxis } from 'recharts';
 import { Loader2, Download, History, Trash2 } from 'lucide-react';
 import { useStore } from '../hooks/useStore';
 import HistoryPage from './HistoryPage';
@@ -35,10 +35,31 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
-  // Use real scatter data from the backend
+  // Use real scatter data from the backend and calculate best fit line
   const scatterData = React.useMemo(() => {
     if (!stats || !stats.scatter_data) return [];
-    return stats.scatter_data;
+    
+    // Sort by area for the line chart to render properly from left to right
+    const data = [...stats.scatter_data].sort((a, b) => a.area - b.area);
+    
+    // Calculate linear regression
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    const n = data.length;
+    
+    data.forEach(p => {
+      sumX += p.area;
+      sumY += p.price;
+      sumXY += (p.area * p.price);
+      sumX2 += (p.area * p.area);
+    });
+
+    const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const c = (sumY - m * sumX) / n;
+
+    return data.map(p => ({
+      ...p,
+      bestFitPrice: m * p.area + c
+    }));
   }, [stats]);
 
   if (loading) {
@@ -178,22 +199,22 @@ export default function DashboardPage() {
 
               <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
+                  <ComposedChart data={scatterData} margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
                     <defs>
                       <linearGradient id="scatterGlow" x1="0" y1="0" x2="1" y2="1">
                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
                         <stop offset="95%" stopColor="#34d399" stopOpacity={0.6} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
                     <XAxis
                       type="number"
                       dataKey="area"
                       name="Area"
                       unit=" sqft"
                       tick={{ fontSize: 12, fill: '#64748b' }}
-                      axisLine={false}
-                      tickLine={false}
+                      axisLine={{ stroke: '#94a3b8' }}
+                      tickLine={{ stroke: '#94a3b8' }}
                       dy={10}
                     />
                     <YAxis
@@ -202,8 +223,8 @@ export default function DashboardPage() {
                       name="Price"
                       unit=" L"
                       tick={{ fontSize: 12, fill: '#64748b' }}
-                      axisLine={false}
-                      tickLine={false}
+                      axisLine={{ stroke: '#94a3b8' }}
+                      tickLine={{ stroke: '#94a3b8' }}
                       dx={-10}
                     />
                     <ZAxis type="number" dataKey="z" range={[40, 200]} />
@@ -221,14 +242,23 @@ export default function DashboardPage() {
                     />
                     <Scatter
                       name="Properties"
-                      data={scatterData}
+                      dataKey="price"
                       fill="url(#scatterGlow)"
                       shape="circle"
                       stroke="#ffffff"
                       strokeWidth={1.5}
                       className="drop-shadow-sm"
                     />
-                  </ScatterChart>
+                    <Line
+                      type="linear"
+                      dataKey="bestFitPrice"
+                      name="Trend"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={false}
+                    />
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </div>

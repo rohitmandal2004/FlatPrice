@@ -1,23 +1,10 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { ArrowRight, BrainCircuit, BarChart3, ShieldCheck, Database, Cog, LineChart, FileOutput, ChevronRight } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function LandingPage() {
-  const containerRef = useRef(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
-
-  const blob1Y = useTransform(scrollYProgress, [0, 1], [0, 500]);
-  const blob2Y = useTransform(scrollYProgress, [0, 1], [0, -300]);
-  const blob3Y = useTransform(scrollYProgress, [0, 1], [0, 600]);
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 200]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -34,19 +21,16 @@ export default function LandingPage() {
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center relative overflow-hidden bg-background">
+    <div className="flex flex-col items-center relative overflow-hidden bg-background">
       {/* Premium Decorative Background Blobs */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-[800px] opacity-60 pointer-events-none z-0">
-        <motion.div style={{ y: blob1Y }} className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-primary/30 rounded-full mix-blend-multiply filter blur-[100px] animate-blob"></motion.div>
-        <motion.div style={{ y: blob2Y }} className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-emerald-400/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000"></motion.div>
-        <motion.div style={{ y: blob3Y }} className="absolute top-[20%] left-[30%] w-[500px] h-[500px] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-4000"></motion.div>
+        <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-primary/30 rounded-full mix-blend-multiply filter blur-[100px] animate-blob"></div>
+        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-emerald-400/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000"></div>
+        <div className="absolute top-[20%] left-[30%] w-[500px] h-[500px] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-4000"></div>
       </div>
 
       {/* Hero Section */}
-      <motion.section 
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="w-full py-20 md:py-32 lg:py-40 flex flex-col items-center text-center relative z-10"
-      >
+      <section className="w-full py-20 md:py-32 lg:py-40 flex flex-col items-center text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -91,13 +75,13 @@ export default function LandingPage() {
             </Link>
           </motion.div>
         </motion.div>
-      </motion.section>
+      </section>
 
       {/* How It Works Section */}
       <section className="w-full py-20 md:py-32 relative z-10 overflow-hidden">
         {/* Subtle background separation */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none"></div>
-        
+
         <div className="max-w-7xl mx-auto px-4 relative">
           <div className="text-center mb-20 space-y-4">
             <h2 className="text-3xl md:text-5xl font-black">How It Works</h2>
@@ -154,9 +138,9 @@ export default function LandingPage() {
       {/* Features Section */}
       <section className="w-full py-20 md:py-32 relative z-10">
         <div className="max-w-7xl mx-auto px-4 text-center mb-16">
-           <h2 className="text-3xl md:text-5xl font-black mb-6">Why Choose FlatPredict</h2>
+          <h2 className="text-3xl md:text-5xl font-black mb-6">Why Choose FlatPredict</h2>
         </div>
-        
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -183,7 +167,7 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.div variants={itemVariants} className="group relative flex flex-col items-start space-y-5 rounded-[2rem] bg-white/60 backdrop-blur-xl border border-white/60 shadow-xl p-10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-400/20 shadow-sm relative z-10 text-blue-600 dark:text-blue-400">
               <ShieldCheck className="h-8 w-8" />
             </div>
