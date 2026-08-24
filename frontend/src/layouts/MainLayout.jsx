@@ -80,6 +80,7 @@ export default function MainLayout() {
             duration: 0.4, 
             ease: [0.22, 1, 0.36, 1] 
           }}
+          style={{ willChange: 'transform, opacity' }}
           className="flex-1 container mx-auto px-4 pt-8 pb-24 md:pb-8 flex flex-col"
         >
           {currentOutlet}

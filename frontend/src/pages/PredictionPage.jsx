@@ -4,7 +4,7 @@ import { predictPrice } from '../services/api';
 import { supabase } from '../services/supabase';
 import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info, IndianRupee, PieChart, LineChart as LineChartIcon, View, ZoomIn, ZoomOut, X, Maximize2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '../hooks/useStore';
 import { useDeferredMount } from '../hooks/useDeferredMount';
@@ -289,18 +289,34 @@ export default function PredictionPage() {
         </div>
 
         <div className="mt-8">
-          {loading ? (
-             <div className="bg-white/60 backdrop-blur-xl border border-white/50 rounded-[2rem] p-10 min-h-[500px] flex items-center justify-center">
-               <Loader2 className="h-12 w-12 text-emerald-600 animate-spin" />
-             </div>
-          ) : result ? (
-            <motion.div id="prediction-report" className="bg-white/90 backdrop-blur-2xl border border-white shadow-xl rounded-[2rem] p-6 sm:p-8 space-y-6 relative overflow-hidden">
-                {/* Top Action Bar */}
-                <div className="flex flex-col gap-6 w-full pb-4 border-b border-slate-100/60 mb-4 relative">
-                  {/* Logo Centered */}
-                  <div className="flex justify-center w-full">
-                    <Logo className="scale-110 sm:scale-125" />
-                  </div>
+          <AnimatePresence mode="wait">
+            {loading ? (
+               <motion.div 
+                 key="loader"
+                 initial={{ opacity: 0, scale: 0.98 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 exit={{ opacity: 0, scale: 0.98 }}
+                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                 className="bg-white/60 backdrop-blur-xl border border-white/50 rounded-[2rem] p-10 min-h-[500px] flex flex-col gap-4 items-center justify-center"
+               >
+                 <Loader2 className="h-12 w-12 text-emerald-600 animate-spin" />
+                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest animate-pulse">Running ML Model...</p>
+               </motion.div>
+            ) : result ? (
+              <motion.div 
+                key="result"
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                id="prediction-report" 
+                className="bg-white/90 backdrop-blur-2xl border border-white shadow-xl rounded-[2rem] p-6 sm:p-8 space-y-6 relative overflow-hidden"
+              >
+                  {/* Top Action Bar */}
+                  <div className="flex flex-col gap-6 w-full pb-4 border-b border-slate-100/60 mb-4 relative">
+                    {/* Logo Centered */}
+                    <div className="flex justify-center w-full">
+                      <Logo className="scale-110 sm:scale-125" />
+                    </div>
                   
                   {/* Badges and Actions */}
                   <div className="flex justify-between items-center w-full">
@@ -519,8 +535,9 @@ export default function PredictionPage() {
                     <span>4000 sqft</span>
                   </div>
                 </div>
-            </motion.div>
-          ) : null}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
 
         {result && (

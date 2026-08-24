@@ -1,39 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { getDatasetStats, getModelInfo, getDatasetDownloadUrl } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Scatter, Line, ZAxis } from 'recharts';
 import { Loader2, Download, History, Trash2, Database, IndianRupee, Activity, TrendingUp } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../hooks/useStore';
+import { useDeferredMount } from '../hooks/useDeferredMount';
 import HistoryPage from './HistoryPage';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [stats, setStats] = useState(null);
-  const [modelInfo, setModelInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [activeDistribution, setActiveDistribution] = useState('facing'); // 'facing' | 'bedrooms'
-  const [coeffView, setCoeffView] = useState('absolute'); // 'absolute' | 'raw'
+  const [activeDistribution, setActiveDistribution] = useState('facing');
+  const [coeffView, setCoeffView] = useState('absolute');
   const history = useStore(state => state.history);
   const clearHistory = useStore(state => state.clearHistory);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [statsData, modelData] = await Promise.all([
-          getDatasetStats(),
-          getModelInfo()
-        ]);
-        setStats(statsData);
-        setModelInfo(modelData);
-      } catch (err) {
-        console.error("Failed to load dashboard data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['datasetStats'],
+    queryFn: getDatasetStats,
+    staleTime: Infinity,
+  });
+
+  const { data: modelInfo, isLoading: modelLoading } = useQuery({
+    queryKey: ['modelInfo'],
+    queryFn: getModelInfo,
+    staleTime: Infinity,
+  });
+
+  const loading = statsLoading || modelLoading;
+  
+  // Only mount heavy SVGs after the page transition has finished
+  const isChartMounted = useDeferredMount(400);
 
   // Use real scatter data from the backend and calculate best fit line
   const scatterData = React.useMemo(() => {
@@ -182,8 +180,9 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={coeffData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                {isChartMounted ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={coeffData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                     <defs>
                       <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="#3b82f6" />
@@ -197,9 +196,14 @@ export default function DashboardPage() {
                       formatter={(val, name, props) => [props?.payload?.originalValue !== undefined ? props.payload.originalValue.toFixed(4) : val, 'Coefficient']}
                       contentStyle={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }} 
                     />
-                    <Bar dataKey="value" fill="url(#barGradient)" radius={[0, 8, 8, 0]} barSize={24} />
-                  </BarChart>
-                </ResponsiveContainer>
+                      <Bar dataKey="value" fill="url(#barGradient)" radius={[0, 8, 8, 0]} barSize={24} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-white/20 rounded-2xl animate-pulse">
+                    <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -216,8 +220,9 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                {isChartMounted ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
                     <Pie 
                       data={activePieData} 
                       cx="50%" cy="50%" 
@@ -237,8 +242,13 @@ export default function DashboardPage() {
                     <Tooltip 
                       contentStyle={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }} 
                     />
-                  </PieChart>
-                </ResponsiveContainer>
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-white/20 rounded-2xl animate-pulse">
+                    <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -256,8 +266,9 @@ export default function DashboardPage() {
               </div>
 
               <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={scatterData} margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
+                {isChartMounted ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={scatterData} margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
                     <defs>
                       <linearGradient id="scatterGlow" x1="0" y1="0" x2="1" y2="1">
                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
@@ -316,8 +327,13 @@ export default function DashboardPage() {
                       dot={false}
                       activeDot={false}
                     />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-white/20 rounded-2xl animate-pulse">
+                    <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
           </div>

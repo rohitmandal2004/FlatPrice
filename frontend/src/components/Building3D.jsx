@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Text, Environment, Float, Sparkles, Billboard } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Text, Environment, Float, Sparkles, Billboard, BakeShadows, Preload } from '@react-three/drei';
 import * as THREE from 'three';
 
 const Car = ({ initialPosition, direction, color }) => {
@@ -834,14 +834,15 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
   );
 };
 
-export default function Building3D({ formData, onSelectFlat }) {
+export default React.memo(function Building3D({ formData, onSelectFlat }) {
   return (
     <div className="w-full h-[50vh] min-h-[350px] lg:h-full lg:min-h-[500px] bg-gradient-to-t from-slate-300 to-sky-100 rounded-2xl overflow-hidden border border-slate-200 relative group cursor-grab active:cursor-grabbing shadow-inner">
       <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-slate-700 pointer-events-none transition-opacity group-hover:opacity-100 opacity-70">
         Select Floor & Facing (Rotate & Click)
       </div>
-      <Canvas shadows camera={{ position: [40, 30, 50], fov: 45 }}>
+      <Canvas shadows dpr={[1, 1.5]} camera={{ position: [40, 30, 50], fov: 45 }} performance={{ min: 0.5 }}>
         <React.Suspense fallback={null}>
+          <BakeShadows />
           <Environment resolution={256} background={false}>
             <mesh>
               <sphereGeometry args={[100, 16, 16]} />
@@ -884,8 +885,13 @@ export default function Building3D({ formData, onSelectFlat }) {
             enableDamping={true}
             dampingFactor={0.05}
           />
+          <Preload all />
         </React.Suspense>
       </Canvas>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  return prevProps.formData?.floor === nextProps.formData?.floor &&
+         prevProps.formData?.facing === nextProps.formData?.facing &&
+         prevProps.formData?.bedrooms === nextProps.formData?.bedrooms;
+});

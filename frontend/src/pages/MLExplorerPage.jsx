@@ -3,7 +3,8 @@ import { getModelInfo } from '../services/api';
 import { BookOpen, BrainCircuit, ListChecks, TrendingUp, Calculator } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
-
+import { useDeferredMount } from '../hooks/useDeferredMount';
+import { Loader2 } from 'lucide-react';
 const ExplorerSkeleton = () => (
   <div className="space-y-8 animate-pulse mt-12">
     <div className="h-64 bg-slate-200/50 rounded-[2rem]"></div>
@@ -22,6 +23,8 @@ export default function MLExplorerPage() {
   });
 
   if (isError) return <div className="text-center text-red-500 mt-10 font-bold">Failed to load model info from backend.</div>;
+
+  const isChartMounted = useDeferredMount(400);
 
   const getChartData = () => {
     if (!modelInfo) return { data: [], intercept: 0, slope: 0 };
@@ -158,22 +161,28 @@ export default function MLExplorerPage() {
           
           <div className="grid md:grid-cols-3 gap-6 items-center">
             <div className="md:col-span-2 h-72 bg-white/50 rounded-2xl p-4 border border-slate-100 shadow-inner">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartInfo.data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="area" tick={{ fontSize: 12, fill: '#64748b' }} tickLine={false} axisLine={{ stroke: '#cbd5e1' }} />
-                  <YAxis tick={{ fontSize: 12, fill: '#64748b' }} tickLine={false} axisLine={{ stroke: '#cbd5e1' }} tickFormatter={(val) => `₹${val}L`} />
-                  <Tooltip 
-                    formatter={(val) => [`₹${val} Lakh`, 'Predicted Price']}
-                    labelFormatter={(val) => `${val} Sqft`}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Line type="monotone" dataKey="price" stroke="#8b5cf6" strokeWidth={4} dot={{ r: 6, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} animationDuration={2000} />
-                  {chartInfo.data.length > 0 && (
-                    <ReferenceDot x={0} y={chartInfo.intercept} r={8} fill="#ef4444" stroke="#fff" strokeWidth={2} />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
+              {isChartMounted ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartInfo.data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="area" tick={{ fontSize: 12, fill: '#64748b' }} tickLine={false} axisLine={{ stroke: '#cbd5e1' }} />
+                    <YAxis tick={{ fontSize: 12, fill: '#64748b' }} tickLine={false} axisLine={{ stroke: '#cbd5e1' }} tickFormatter={(val) => `₹${val}L`} />
+                    <Tooltip 
+                      formatter={(val) => [`₹${val} Lakh`, 'Predicted Price']}
+                      labelFormatter={(val) => `${val} Sqft`}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Line type="monotone" dataKey="price" stroke="#8b5cf6" strokeWidth={4} dot={{ r: 6, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} animationDuration={2000} />
+                    {chartInfo.data.length > 0 && (
+                      <ReferenceDot x={0} y={chartInfo.intercept} r={8} fill="#ef4444" stroke="#fff" strokeWidth={2} />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-white/20 rounded-2xl animate-pulse">
+                  <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
