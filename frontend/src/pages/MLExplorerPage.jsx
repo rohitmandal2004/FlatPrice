@@ -54,7 +54,7 @@ export default function MLExplorerPage() {
         <p className="text-slate-500 font-medium md:text-lg">Understanding Multiple Linear Regression</p>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <ExplorerSkeleton />
       ) : (
         <div className="space-y-8">
