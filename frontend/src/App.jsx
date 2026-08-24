@@ -9,12 +9,18 @@ import PredictionPage from './pages/PredictionPage';
 import DashboardPage from './pages/DashboardPage';
 import MLExplorerPage from './pages/MLExplorerPage';
 import HistoryPage from './pages/HistoryPage';
+import SignInPage from './pages/SignInPage';
+import SignUpPage from './pages/SignUpPage';
 
 function App() {
   return (
     <HelmetProvider>
       <Router>
         <Routes>
+          {/* Custom Auth Routes (No MainLayout wrapper so they take full screen beautifully) */}
+          <Route path="/sign-in/*" element={<SignInPage />} />
+          <Route path="/sign-up/*" element={<SignUpPage />} />
+
           <Route path="/" element={<MainLayout />}>
             {/* Public Routes */}
             <Route index element={<LandingPage />} />
