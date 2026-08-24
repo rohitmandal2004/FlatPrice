@@ -13,18 +13,16 @@ const ExplorerSkeleton = () => (
 );
 
 export default function MLExplorerPage() {
-  const { data: modelInfo, isLoading: loading, isError } = useQuery({
+  const { data: modelInfo, isLoading, isError } = useQuery({
     queryKey: ['modelInfo'],
-    queryFn: async () => {
-      const data = await getModelInfo();
-      return data;
-    },
-    staleTime: 1000 * 60 * 60, // Cache for an hour since model doesn't change often
+    queryFn: getModelInfo,
+    staleTime: Infinity,
   });
 
-  if (isError) return <div className="text-center text-red-500 mt-10 font-bold">Failed to load model info from backend.</div>;
-
   const isChartMounted = useDeferredMount(400);
+
+  if (isLoading) return <ExplorerSkeleton />;
+  if (isError) return <div className="text-center text-red-500 mt-10 font-bold">Failed to load model info from backend.</div>;
 
   const getChartData = () => {
     if (!modelInfo) return { data: [], intercept: 0, slope: 0 };
