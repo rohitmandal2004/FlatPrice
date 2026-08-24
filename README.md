@@ -68,6 +68,34 @@ Create `.env` in both `backend` and `frontend` folders using the provided `.env.
 
 Open `http://localhost:5173` in your browser.
 
+## Deployment (Free Tiers)
+
+The backend is fully containerized using Docker and is ready to be deployed to modern cloud platforms. Here are step-by-step instructions for the best free options.
+
+### Option 1: Koyeb (Best for APIs, Never Sleeps)
+Koyeb offers a free Eco instance that does not spin down when inactive, making it perfect for a fast, responsive API.
+
+1. Create a free account at [koyeb.com](https://koyeb.com/)
+2. Click **Create App** and choose **GitHub**.
+3. Select your `FlatPrice` repository.
+4. Set the following configurations:
+   * **Builder:** Docker
+   * **Work Directory:** `/backend`
+   * **Ports:** Expose port `8000`
+5. Click **Deploy**. Koyeb will build your Dockerfile and give you a public URL (e.g., `https://your-app-name.koyeb.app`).
+6. Update your `VITE_API_URL` in your frontend's `.env` to point to this new URL.
+
+### Option 2: Hugging Face Spaces (Best for ML Labs)
+Since this is an AI/ML project, Hugging Face offers completely free Docker hosting. (Note: Your code is public by default on a free account).
+
+1. Create an account at [huggingface.co](https://huggingface.co/)
+2. Click your profile picture -> **New Space**.
+3. Name your space (e.g., `flat-price-predictor`).
+4. Select **Docker** as the Space SDK and **Blank** as the template.
+5. Create the Space.
+6. Hugging Face will provide you with Git instructions. Clone their empty repository to your computer, copy the contents of your `backend/` folder into it, and push it back to Hugging Face.
+7. Your API will be live at `https://huggingface.co/spaces/your-username/flat-price-predictor`. Update your frontend `.env` to match.
+
 ## Training the Model
 
 To retrain the ML model (e.g., if you update the dataset in `backend/data/`):

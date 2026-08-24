@@ -1,59 +1,85 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { supabase } from '../services/supabase';
 import { Helmet } from 'react-helmet-async';
 import { History, Trash2, Calendar, MapPin, Square, BedDouble, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// --- Skeleton Component ---
+const HistorySkeleton = () => (
+  <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2rem] p-6 shadow-sm relative overflow-hidden animate-pulse">
+    <div className="flex items-center gap-2 mb-4">
+      <div className="w-4 h-4 bg-slate-200 rounded-md"></div>
+      <div className="w-32 h-3 bg-slate-200 rounded-md"></div>
+    </div>
+    <div className="mb-6">
+      <div className="w-24 h-4 bg-emerald-100/50 rounded-md mb-3"></div>
+      <div className="w-40 h-10 bg-slate-200 rounded-lg"></div>
+    </div>
+    <div className="grid grid-cols-2 gap-4">
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl">
+          <div className="w-6 h-6 bg-slate-200 rounded-lg shrink-0"></div>
+          <div className="w-16 h-3 bg-slate-200 rounded-md"></div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export default function HistoryPage() {
   const { user, isLoaded } = useUser();
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      fetchHistory();
-    }
-  }, [isLoaded, user]);
+  const { data: history = [], isLoading: loading } = useQuery({
+    queryKey: ['history', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('predictions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        toast.error("Failed to load prediction history.");
+        throw new Error(error.message);
+      }
+      return data || [];
+    },
+    enabled: isLoaded && !!user,
+  });
 
-  const fetchHistory = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('predictions')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error("Error fetching history:", error);
-      toast.error("Failed to load prediction history.");
-    } else {
-      setHistory(data || []);
-    }
-    setLoading(false);
-  };
-
-  const deletePrediction = async (id) => {
-    const { error } = await supabase
-      .from('predictions')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      toast.error("Failed to delete record.");
-    } else {
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from('predictions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) throw new Error(error.message);
+      return id;
+    },
+    onSuccess: (deletedId) => {
       toast.success("Record deleted successfully.");
-      setHistory(history.filter((item) => item.id !== id));
+      queryClient.setQueryData(['history', user.id], (old) => 
+        old ? old.filter((item) => item.id !== deletedId) : []
+      );
+    },
+    onError: () => {
+      toast.error("Failed to delete record.");
     }
+  });
+
+  const deletePrediction = (id) => {
+    deleteMutation.mutate(id);
   };
 
-  if (!isLoaded || loading) {
+  if (!isLoaded) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+      <div className="flex justify-center min-h-[50vh] items-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Loading your history...</p>
       </div>
     );
   }
@@ -74,7 +100,13 @@ export default function HistoryPage() {
         </p>
       </div>
 
-      {history.length === 0 ? (
+      {loading ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <HistorySkeleton />
+          <HistorySkeleton />
+          <HistorySkeleton />
+        </div>
+      ) : history.length === 0 ? (
         <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2rem] p-12 text-center shadow-lg flex flex-col items-center">
           <div className="h-20 w-20 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
             <History className="h-10 w-10 text-slate-400" />

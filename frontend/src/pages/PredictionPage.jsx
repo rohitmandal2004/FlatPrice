@@ -10,22 +10,39 @@ import { useStore } from '../hooks/useStore';
 import toast from 'react-hot-toast';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
 import Building3D from '../components/Building3D';
 import Logo from '../components/Logo';
+
+const formSchema = z.object({
+  area_sqft: z.coerce.number().min(300, "Area must be at least 300 sqft").max(10000, "Area must be below 10000 sqft"),
+  facing: z.enum(['North', 'South', 'East', 'West']),
+  floor: z.coerce.number().min(0, "Floor cannot be negative").max(100, "Floor seems too high"),
+  car_parking_sqft: z.coerce.number().min(0, "Car parking cannot be negative"),
+  bedrooms: z.coerce.number().min(1).max(10)
+}).refine((data) => data.car_parking_sqft <= data.area_sqft * 0.5, {
+  message: "Parking area too large compared to flat",
+  path: ["car_parking_sqft"]
+});
 
 export default function PredictionPage() {
   const { user } = useUser();
   const setLastPrediction = useStore((state) => state.setLastPrediction);
-  const [formData, setFormData] = useState({
-    area_sqft: 1200,
-    facing: 'North',
-    floor: 5,
-    car_parking_sqft: 150,
-    bedrooms: 3
+  const { register, handleSubmit: hookFormSubmit, watch, formState: { errors }, setValue } = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      area_sqft: 1200,
+      facing: 'North',
+      floor: 5,
+      car_parking_sqft: 150,
+      bedrooms: 3
+    }
   });
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+
+  const formData = watch();
   const [showFloorPlanModal, setShowFloorPlanModal] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
 
@@ -34,48 +51,43 @@ export default function PredictionPage() {
   const [emiState, setEmiState] = useState({ downPayment: 20, interestRate: 8.5, tenure: 20 });
   const [roiState, setRoiState] = useState({ holdYears: 5, appreciationRate: 6 });
 
-  const handleSelectFlat = (floor, facing) => {
-    setFormData(prev => ({ ...prev, floor, facing }));
-  };
-
   // Sync slider with form
   React.useEffect(() => {
-    setSliderArea(formData.area_sqft);
+    setSliderArea(formData.area_sqft || 1200);
   }, [formData.area_sqft]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'facing' ? value : Number(value)
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const data = await predictPrice(formData);
-      setResult(data);
-      setLastPrediction(data);
-
+  const mutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await predictPrice(data);
       if (user) {
         await supabase.from('predictions').insert([{
           user_id: user.id,
-          ...formData,
-          predicted_price_lakh: data.predicted_price_lakh,
+          ...data,
+          predicted_price_lakh: response.predicted_price_lakh,
           model_version: 'mlr-v1'
         }]);
       }
-    } catch (err) {
+      return response;
+    },
+    onSuccess: (data) => {
+      setLastPrediction(data);
+    },
+    onError: (err) => {
       const errorMsg = err.response?.data?.detail || err.message || 'Failed to predict price';
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
+      toast.error(errorMsg);
     }
+  });
+
+  const loading = mutation.isPending;
+  const result = mutation.data;
+
+  const handleSelectFlat = (floor, facing) => {
+    setValue('floor', floor, { shouldValidate: true });
+    setValue('facing', facing, { shouldValidate: true });
+  };
+
+  const onSubmit = (data) => {
+    mutation.mutate(data);
   };
 
   const handleCopy = () => {
@@ -176,7 +188,8 @@ export default function PredictionPage() {
 
   const calculateEMI = () => {
     if (!result) return 0;
-    const principal = (result.predicted_price_lakh * 100000) * (1 - emiState.downPayment / 100);
+    const currentVal = Number(getWhatIfPrice());
+    const principal = (currentVal * 100000) * (1 - emiState.downPayment / 100);
     const r = (emiState.interestRate / 12) / 100;
     const n = emiState.tenure * 12;
     if (r === 0) return Math.round(principal / n);
@@ -186,19 +199,19 @@ export default function PredictionPage() {
 
   const calculateROI = () => {
     if (!result) return { futureValue: 0, profit: 0 };
-    const currentVal = result.predicted_price_lakh;
+    const currentVal = Number(getWhatIfPrice());
     const futureVal = currentVal * Math.pow(1 + (roiState.appreciationRate / 100), roiState.holdYears);
     return { futureValue: futureVal.toFixed(2), profit: (futureVal - currentVal).toFixed(2) };
   };
 
   const generateHistoricalData = () => {
     if (!result) return [];
-    const currentPrice = result.predicted_price_lakh;
+    const currentPrice = Number(getWhatIfPrice());
     const data = [];
     const currentYear = new Date().getFullYear();
+    const fixedFluctuations = [1.0, 0.98, 1.03, 0.96, 1.01, 0.99]; 
     for (let i = 5; i >= 0; i--) {
-      const randomFluctuation = 1 - (Math.random() * 0.05);
-      const pastPrice = currentPrice / Math.pow(1.06, i) * randomFluctuation;
+      const pastPrice = currentPrice / Math.pow(1.06, i) * fixedFluctuations[i];
       data.push({ year: currentYear - i, price: Number(pastPrice.toFixed(2)) });
     }
     data[data.length - 1].price = Number(currentPrice.toFixed(2));
@@ -221,35 +234,38 @@ export default function PredictionPage() {
         </div>
 
         <div className="grid lg:grid-cols-12 gap-8 items-stretch">
-          <motion.div className="lg:col-span-5 bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl rounded-[2rem] p-6 sm:p-8 flex flex-col justify-center">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <motion.div className="lg:col-span-5 relative overflow-hidden bg-white/40 backdrop-blur-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 sm:p-8 flex flex-col justify-center before:absolute before:inset-0 before:bg-gradient-to-br before:from-emerald-50/80 before:to-transparent before:pointer-events-none">
+            <form onSubmit={hookFormSubmit(onSubmit)} className="space-y-6 relative z-10">
               <div className="space-y-5">
-                <div className="group/input">
-                  <label className="block text-sm font-bold mb-2">Area (sq ft)</label>
-                  <input type="number" name="area_sqft" value={formData.area_sqft} onChange={handleChange} min="100" required className="w-full h-12 rounded-xl border border-input/60 px-4 text-base" />
+                <div className="group/input relative">
+                  <label className="block text-xs font-bold mb-2 text-emerald-800 uppercase tracking-wider">Area (sq ft)</label>
+                  <input type="number" {...register('area_sqft')} className="w-full h-12 rounded-xl border border-emerald-100 bg-white/60 px-4 text-base focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400 focus:bg-white transition-all duration-300 shadow-sm text-slate-700" />
+                  {errors.area_sqft && <p className="text-red-500 text-xs mt-1.5 font-semibold bg-red-50 px-2 py-1 rounded-md inline-block">{errors.area_sqft.message}</p>}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="group/input">
-                    <label className="block text-sm font-bold mb-2">Facing</label>
-                    <select name="facing" value={formData.facing} onChange={handleChange} className="w-full h-12 rounded-xl border border-input/60 px-4 text-base bg-transparent">
+                  <div className="group/input relative">
+                    <label className="block text-xs font-bold mb-2 text-emerald-800 uppercase tracking-wider">Facing</label>
+                    <select {...register('facing')} className="w-full h-12 rounded-xl border border-emerald-100 bg-white/60 px-4 text-base focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400 focus:bg-white transition-all duration-300 shadow-sm appearance-none text-slate-700 cursor-pointer">
                       <option value="North">North</option>
                       <option value="South">South</option>
                       <option value="East">East</option>
                       <option value="West">West</option>
                     </select>
                   </div>
-                  <div className="group/input">
-                    <label className="block text-sm font-bold mb-2">Floor</label>
-                    <input type="number" name="floor" value={formData.floor} onChange={handleChange} min="0" required className="w-full h-12 rounded-xl border border-input/60 px-4 text-base" />
+                  <div className="group/input relative">
+                    <label className="block text-xs font-bold mb-2 text-emerald-800 uppercase tracking-wider">Floor</label>
+                    <input type="number" {...register('floor')} className="w-full h-12 rounded-xl border border-emerald-100 bg-white/60 px-4 text-base focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400 focus:bg-white transition-all duration-300 shadow-sm text-slate-700" />
+                    {errors.floor && <p className="text-red-500 text-xs mt-1.5 font-semibold bg-red-50 px-2 py-1 rounded-md inline-block">{errors.floor.message}</p>}
                   </div>
                 </div>
-                <div className="group/input">
-                  <label className="block text-sm font-bold mb-2">Car Parking Area (sq ft)</label>
-                  <input type="number" name="car_parking_sqft" value={formData.car_parking_sqft} onChange={handleChange} min="0" required className="w-full h-12 rounded-xl border border-input/60 px-4 text-base" />
+                <div className="group/input relative">
+                  <label className="block text-xs font-bold mb-2 text-emerald-800 uppercase tracking-wider">Car Parking Area (sq ft)</label>
+                  <input type="number" {...register('car_parking_sqft')} className="w-full h-12 rounded-xl border border-emerald-100 bg-white/60 px-4 text-base focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400 focus:bg-white transition-all duration-300 shadow-sm text-slate-700" />
+                  {errors.car_parking_sqft && <p className="text-red-500 text-xs mt-1.5 font-semibold bg-red-50 px-2 py-1 rounded-md inline-block">{errors.car_parking_sqft.message}</p>}
                 </div>
-                <div className="group/input">
-                  <label className="block text-sm font-bold mb-2">Bedrooms</label>
-                  <select name="bedrooms" value={formData.bedrooms} onChange={handleChange} className="w-full h-12 rounded-xl border border-input/60 px-4 text-base bg-transparent">
+                <div className="group/input relative">
+                  <label className="block text-xs font-bold mb-2 text-emerald-800 uppercase tracking-wider">Bedrooms</label>
+                  <select {...register('bedrooms')} className="w-full h-12 rounded-xl border border-emerald-100 bg-white/60 px-4 text-base focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:border-emerald-400 focus:bg-white transition-all duration-300 shadow-sm appearance-none text-slate-700 cursor-pointer">
                     <option value={1}>1 BHK</option>
                     <option value={2}>2 BHK</option>
                     <option value={3}>3 BHK</option>
@@ -258,8 +274,9 @@ export default function PredictionPage() {
                   </select>
                 </div>
               </div>
-              <button type="submit" disabled={loading} className="w-full h-14 bg-primary text-primary-foreground rounded-xl font-bold hover:shadow-lg transition-all hover:-translate-y-0.5">
-                {loading ? 'Analyzing Market...' : 'Predict Property Value'}
+              <button type="submit" disabled={loading} className="w-full h-14 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-black text-lg hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100 disabled:hover:translate-y-0 relative overflow-hidden group border border-emerald-400/50">
+                <span className="relative z-10">{loading ? 'Analyzing Market...' : 'Predict Property Value'}</span>
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
               </button>
             </form>
           </motion.div>
@@ -436,24 +453,63 @@ export default function PredictionPage() {
                   </div>
                 </div>
 
-                {/* Area Simulator - Cleaned */}
-                <div className="mt-4 bg-slate-50/50 rounded-xl p-5 border border-slate-100">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Area Simulator</h3>
-                    <div className="font-black text-xl text-emerald-700">₹{getWhatIfPrice()} L</div>
+                {/* Area Simulator - Premium Redesign */}
+                <div className="mt-8 bg-gradient-to-br from-white/80 to-emerald-50/50 backdrop-blur-md rounded-[2rem] p-6 sm:p-8 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none group-hover:bg-emerald-400/20 transition-all duration-700"></div>
+                  
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 relative z-10">
+                    <div>
+                      <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 mb-1.5">
+                        <div className="p-1.5 bg-emerald-100 rounded-md text-emerald-600">
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </div>
+                        Interactive Area Simulator
+                      </h3>
+                      <p className="text-xs text-slate-400 font-medium">Adjust the slider to see how area impacts value</p>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-sm border border-emerald-100/50">
+                      <div className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1">Estimated Value</div>
+                      <div className="font-black text-3xl text-emerald-700 tracking-tight flex items-baseline gap-1">
+                        ₹{getWhatIfPrice()} <span className="text-xl text-emerald-500/70">L</span>
+                      </div>
+                    </div>
                   </div>
-                  <input 
-                    type="range" 
-                    min="500" 
-                    max="4000" 
-                    step="50" 
-                    value={sliderArea} 
-                    onChange={(e) => setSliderArea(Number(e.target.value))} 
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500" 
-                  />
-                  <div className="flex justify-between text-xs font-bold text-slate-400 mt-3">
+                  
+                  <div className="relative z-10 pt-4 pb-2">
+                    <input 
+                      type="range" 
+                      min="500" 
+                      max="4000" 
+                      step="50" 
+                      value={sliderArea} 
+                      onChange={(e) => setSliderArea(Number(e.target.value))} 
+                      className="w-full h-3 rounded-full appearance-none cursor-pointer outline-none shadow-inner" 
+                      style={{ 
+                        background: `linear-gradient(to right, #10b981 ${((sliderArea - 500) / (4000 - 500)) * 100}%, #f1f5f9 ${((sliderArea - 500) / (4000 - 500)) * 100}%)` 
+                      }}
+                    />
+                    <style>{`
+                      input[type=range]::-webkit-slider-thumb {
+                        appearance: none;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        background: white;
+                        border: 4px solid #10b981;
+                        box-shadow: 0 0 15px rgba(16,185,129,0.5);
+                        cursor: pointer;
+                        transition: transform 0.1s;
+                      }
+                      input[type=range]::-webkit-slider-thumb:hover {
+                        transform: scale(1.2);
+                        box-shadow: 0 0 20px rgba(16,185,129,0.7);
+                      }
+                    `}</style>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-xs font-bold text-slate-400 mt-4 relative z-10 px-1">
                     <span>500 sqft</span>
-                    <span className="bg-slate-200/50 px-2 py-1 rounded text-slate-600">{sliderArea} sqft</span>
+                    <span className="bg-emerald-500 text-white px-4 py-1.5 rounded-full shadow-md text-sm font-black -translate-y-1">{sliderArea} sqft</span>
                     <span>4000 sqft</span>
                   </div>
                 </div>
@@ -489,7 +545,7 @@ export default function PredictionPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="font-bold text-muted-foreground uppercase tracking-wider">Down Payment</span>
-                      <span className="font-black">{emiState.downPayment}% <span className="text-muted-foreground font-semibold">(₹{((result.predicted_price_lakh * emiState.downPayment) / 100).toFixed(2)}L)</span></span>
+                      <span className="font-black">{emiState.downPayment}% <span className="text-muted-foreground font-semibold">(₹{((Number(getWhatIfPrice()) * emiState.downPayment) / 100).toFixed(2)}L)</span></span>
                     </div>
                     <input type="range" min="10" max="90" step="5" value={emiState.downPayment} onChange={(e) => setEmiState({ ...emiState, downPayment: Number(e.target.value) })} className="w-full h-2 bg-primary/20 rounded-lg appearance-none cursor-pointer accent-primary" />
                   </div>

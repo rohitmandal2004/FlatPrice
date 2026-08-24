@@ -1,27 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { getModelInfo } from '../services/api';
-import { Loader2, BookOpen, BrainCircuit, ListChecks } from 'lucide-react';
+import { BookOpen, BrainCircuit, ListChecks } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+
+const ExplorerSkeleton = () => (
+  <div className="space-y-8 animate-pulse mt-12">
+    <div className="h-64 bg-slate-200/50 rounded-[2rem]"></div>
+    <div className="h-64 bg-slate-200/50 rounded-[2rem]"></div>
+  </div>
+);
 
 export default function MLExplorerPage() {
-  const [modelInfo, setModelInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: modelInfo, isLoading: loading, isError } = useQuery({
+    queryKey: ['modelInfo'],
+    queryFn: async () => {
+      const data = await getModelInfo();
+      return data;
+    },
+    staleTime: 1000 * 60 * 60, // Cache for an hour since model doesn't change often
+  });
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await getModelInfo();
-        setModelInfo(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  if (loading) return <div className="flex justify-center mt-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  if (!modelInfo) return <div className="text-center text-red-500 mt-10">Failed to load model info.</div>;
+  if (isError) return <div className="text-center text-red-500 mt-10 font-bold">Failed to load model info from backend.</div>;
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -34,7 +33,10 @@ export default function MLExplorerPage() {
         <p className="text-slate-500 font-medium md:text-lg">Understanding Multiple Linear Regression</p>
       </div>
 
-      <div className="space-y-8">
+      {loading ? (
+        <ExplorerSkeleton />
+      ) : (
+        <div className="space-y-8">
         <section className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2rem] p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
           <div className="flex items-center gap-3 border-b border-slate-200/50 pb-4 mb-4">
             <div className="p-2 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
@@ -111,7 +113,8 @@ export default function MLExplorerPage() {
             </li>
           </ul>
         </section>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

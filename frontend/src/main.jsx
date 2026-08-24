@@ -12,13 +12,25 @@ if (!PUBLISHABLE_KEY) {
 }
 
 import { ErrorBoundary } from './ErrorBoundary.jsx'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+})
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/" signInUrl="/sign-in" signUpUrl="/sign-up">
-        <App />
-      </ClerkProvider>
+      <QueryClientProvider client={queryClient}>
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/" signInUrl="/sign-in" signUpUrl="/sign-up">
+          <App />
+        </ClerkProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 )
