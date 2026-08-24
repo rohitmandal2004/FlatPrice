@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '../hooks/useStore';
+import { useDeferredMount } from '../hooks/useDeferredMount';
 import toast from 'react-hot-toast';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
@@ -18,13 +19,13 @@ import Building3D from '../components/Building3D';
 import Logo from '../components/Logo';
 
 const formSchema = z.object({
-  area_sqft: z.coerce.number().min(300, "Area must be at least 300 sqft").max(10000, "Area must be below 10000 sqft"),
+  area_sqft: z.coerce.number().min(200, "Area must be at least 200 sqft").max(15000, "Unrealistic area (Max 15000)"),
   facing: z.enum(['North', 'South', 'East', 'West']),
-  floor: z.coerce.number().min(0, "Floor cannot be negative").max(100, "Floor seems too high"),
-  car_parking_sqft: z.coerce.number().min(0, "Car parking cannot be negative"),
-  bedrooms: z.coerce.number().min(1).max(10)
-}).refine((data) => data.car_parking_sqft <= data.area_sqft * 0.5, {
-  message: "Parking area too large compared to flat",
+  floor: z.coerce.number().min(0, "Floor cannot be negative").max(150, "Unrealistic floor (Max 150)"),
+  car_parking_sqft: z.coerce.number().min(0, "Car parking cannot be negative").max(5000, "Unrealistic parking area"),
+  bedrooms: z.coerce.number().min(1, "At least 1 bedroom required").max(20, "Unrealistic bedroom count")
+}).refine((data) => data.car_parking_sqft <= data.area_sqft * 0.8, {
+  message: "Parking cannot exceed 80% of flat area",
   path: ["car_parking_sqft"]
 });
 
@@ -45,6 +46,7 @@ export default function PredictionPage() {
   const formData = watch();
   const [showFloorPlanModal, setShowFloorPlanModal] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+  const isChartMounted = useDeferredMount(400); // Wait for page transition to finish
 
   // Analytics State
   const [sliderArea, setSliderArea] = useState(1200);
@@ -356,31 +358,35 @@ export default function PredictionPage() {
                     <div className="w-56 h-56 flex-shrink-0 relative">
                       <div className="absolute inset-0 bg-emerald-400/20 rounded-full blur-2xl animate-pulse"></div>
                       <ResponsiveContainer width="100%" height="100%" className="relative z-10 drop-shadow-2xl">
-                        <RechartsPieChart>
-                          <Pie
-                            data={getPriceBreakdown()}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={70}
-                            outerRadius={95}
-                            paddingAngle={5}
-                            cornerRadius={8}
-                            dataKey="value"
-                            stroke="none"
-                            isAnimationActive={true}
-                            animationDuration={1500}
-                            animationEasing="ease-out"
-                          >
-                            {getPriceBreakdown().map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.hex} className="hover:opacity-80 transition-opacity duration-300 cursor-pointer" />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value) => [`₹${value.toFixed(2)} L`, 'Value']}
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                            itemStyle={{ color: '#1e293b' }}
-                          />
-                        </RechartsPieChart>
+                        {isChartMounted ? (
+                          <RechartsPieChart>
+                            <Pie
+                              data={getPriceBreakdown()}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={70}
+                              outerRadius={95}
+                              paddingAngle={5}
+                              cornerRadius={8}
+                              dataKey="value"
+                              stroke="none"
+                              isAnimationActive={true}
+                              animationDuration={1500}
+                              animationEasing="ease-out"
+                            >
+                              {getPriceBreakdown().map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.hex} className="hover:opacity-80 transition-opacity duration-300 cursor-pointer" />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value) => [`₹${value.toFixed(2)} L`, 'Value']}
+                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+                              itemStyle={{ color: '#1e293b' }}
+                            />
+                          </RechartsPieChart>
+                        ) : (
+                          <div className="w-full h-full rounded-full border-4 border-emerald-100/50 flex items-center justify-center animate-pulse" />
+                        )}
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
                         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Value</span>

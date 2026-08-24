@@ -1,12 +1,18 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, Literal
 
 class PredictionRequest(BaseModel):
-    area_sqft: float = Field(..., gt=0, description="Area in sqft must be greater than 0")
+    area_sqft: float = Field(..., gt=200, le=15000, description="Area must be between 200 and 15000 sqft")
     facing: Literal["North", "South", "East", "West"]
-    floor: int = Field(..., ge=0, description="Floor cannot be negative")
-    car_parking_sqft: float = Field(..., ge=0, description="Car parking area cannot be negative")
-    bedrooms: int = Field(..., gt=0, description="Number of bedrooms must be at least 1")
+    floor: int = Field(..., ge=0, le=150, description="Floor must be between 0 and 150")
+    car_parking_sqft: float = Field(..., ge=0, le=5000, description="Car parking area cannot be negative or exceed 5000")
+    bedrooms: int = Field(..., ge=1, le=20, description="Number of bedrooms must be between 1 and 20")
+
+    @model_validator(mode='after')
+    def validate_parking_area(self) -> 'PredictionRequest':
+        if self.car_parking_sqft > self.area_sqft * 0.8:
+            raise ValueError("Car parking area cannot be larger than 80% of the flat area (Unrealistic Input)")
+        return self
 
 class PredictionResponse(BaseModel):
     predicted_price_lakh: float

@@ -37,9 +37,9 @@ export default function LandingPage() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-[1000px] space-y-10 px-4 flex flex-col items-center"
         >
-          <h1 className="text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1] text-foreground">
+          <h1 className="text-4xl font-black tracking-tight sm:text-5xl md:text-6xl lg:text-8xl leading-[1.1] text-foreground">
             Predict Flat Prices with{' '}
-            <span className="relative whitespace-nowrap">
+            <span className="relative inline-block mt-2 sm:mt-0">
               <span className="absolute -inset-2 bg-gradient-to-r from-primary to-emerald-400 opacity-20 blur-2xl rounded-full"></span>
               <span className="relative bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-600 drop-shadow-sm">
                 Machine Learning

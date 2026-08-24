@@ -1,14 +1,16 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link, Outlet, useLocation, useNavigate, useOutlet } from 'react-router-dom';
 import { Home, Calculator, BarChart3, BookOpen, History } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import Logo from '../components/Logo';
-
-
+import { Dock } from '../components/ui/dock-two';
 
 export default function MainLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const currentOutlet = useOutlet();
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
@@ -26,7 +28,7 @@ export default function MainLayout() {
           </div>
           
           <div className="flex items-center">
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-2">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -35,12 +37,19 @@ export default function MainLayout() {
                     key={item.name}
                     to={item.href}
                     className={cn(
-                      "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                      isActive ? "text-primary" : "text-muted-foreground"
+                      "relative flex items-center gap-2 text-sm font-bold px-4 py-2 transition-colors duration-300 rounded-full",
+                      isActive ? "text-emerald-700" : "text-slate-500 hover:text-emerald-600"
                     )}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="desktopNavBubble"
+                        className="absolute inset-0 bg-emerald-50 rounded-full -z-10 shadow-sm border border-emerald-100/50"
+                        transition={{ type: "spring", stiffness: 350, damping: 30, mass: 0.8 }}
+                      />
+                    )}
+                    <Icon className={cn("h-4 w-4 transition-colors", isActive ? "text-emerald-600" : "")} />
+                    <span className="relative z-10">{item.name}</span>
                   </Link>
                 );
               })}
@@ -61,29 +70,33 @@ export default function MainLayout() {
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 pt-8 pb-24 md:pb-8">
-        <Outlet />
-      </main>
+      <AnimatePresence mode="wait">
+        <motion.main 
+          key={location.pathname}
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 1.02, y: -10 }}
+          transition={{ 
+            duration: 0.4, 
+            ease: [0.22, 1, 0.36, 1] 
+          }}
+          className="flex-1 container mx-auto px-4 pt-8 pb-24 md:pb-8 flex flex-col"
+        >
+          {currentOutlet}
+        </motion.main>
+      </AnimatePresence>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-background border-t h-16 px-2 pb-[env(safe-area-inset-bottom)]">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center w-full h-full gap-1 text-xs transition-colors",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Icon className={cn("h-6 w-6", isActive && "fill-primary/20")} />
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Mobile Bottom Navigation (Replaced with Dock) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]">
+        <Dock 
+          items={navigation.map(item => ({
+            icon: item.icon,
+            label: item.name,
+            isActive: location.pathname === item.href,
+            onClick: () => navigate(item.href)
+          }))}
+        />
+      </div>
 
       <footer className="border-t py-6 md:py-0">
         <div className="container mx-auto px-4 flex flex-col items-center justify-center gap-4 md:h-16 md:flex-row">
