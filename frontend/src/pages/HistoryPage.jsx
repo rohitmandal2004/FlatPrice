@@ -94,6 +94,23 @@ export default function HistoryPage() {
     );
   }
 
+  // Calculate personal analytics
+  const totalPredictions = history.length;
+  const averagePrice = totalPredictions > 0 
+    ? (history.reduce((sum, item) => sum + item.predicted_price_lakh, 0) / totalPredictions).toFixed(2)
+    : 0;
+  const highestPrice = totalPredictions > 0 
+    ? Math.max(...history.map(item => item.predicted_price_lakh)).toFixed(2)
+    : 0;
+  
+  const bhkCounts = history.reduce((acc, item) => {
+    acc[item.bedrooms] = (acc[item.bedrooms] || 0) + 1;
+    return acc;
+  }, {});
+  const mostCommonBHK = totalPredictions > 0 
+    ? Object.keys(bhkCounts).reduce((a, b) => bhkCounts[a] > bhkCounts[b] ? a : b)
+    : '-';
+
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
       <Helmet>
@@ -109,6 +126,31 @@ export default function HistoryPage() {
           View and manage all your past flat price estimates.
         </p>
       </div>
+
+      {!loading && history.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          <div className="bg-white/60 backdrop-blur-xl rounded-[1.5rem] p-4 border border-white/60 shadow-sm flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Predictions</span>
+            <span className="text-3xl font-black text-slate-800">{totalPredictions}</span>
+          </div>
+          <div className="bg-white/60 backdrop-blur-xl rounded-[1.5rem] p-4 border border-white/60 shadow-sm flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Average Value</span>
+            <span className="text-2xl font-black text-emerald-600">₹{averagePrice}L</span>
+          </div>
+          <div className="bg-white/60 backdrop-blur-xl rounded-[1.5rem] p-4 border border-white/60 shadow-sm flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Highest Value</span>
+            <span className="text-2xl font-black text-emerald-600">₹{highestPrice}L</span>
+          </div>
+          <div className="bg-white/60 backdrop-blur-xl rounded-[1.5rem] p-4 border border-white/60 shadow-sm flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Top Config</span>
+            <span className="text-3xl font-black text-blue-600">{mostCommonBHK} <span className="text-base text-blue-400">BHK</span></span>
+          </div>
+        </motion.div>
+      )}
 
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -134,72 +176,72 @@ export default function HistoryPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               key={item.id}
-              className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2rem] p-6 shadow-lg hover:bg-white/80 transition-all hover:-translate-y-1 relative overflow-hidden group"
+              className="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative group flex flex-col justify-between"
             >
-              {/* Background Layout Image */}
-              <div 
-                className="absolute inset-0 z-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500 bg-center bg-no-repeat bg-contain"
-                style={{ backgroundImage: `url(/floor_plan_${item.bedrooms}bhk.jpg)`, backgroundPosition: 'right bottom', backgroundSize: '70%' }}
-              />
-
               <div className="relative z-10">
-                <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                  <button 
-                  onClick={() => handleShare(item)}
-                  className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-2xl transition-colors shadow-sm"
-                  title="Share record"
-                >
-                  <Share2 className="h-4 w-4" />
-                </button>
-                <button 
-                  onClick={() => deletePrediction(item.id)}
-                  className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-2xl transition-colors shadow-sm"
-                  title="Delete record"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100 shadow-inner">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(item.created_at).toLocaleDateString(undefined, {
+                      year: 'numeric', month: 'short', day: 'numeric'
+                    })}
+                  </div>
+                  
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={() => handleShare(item)}
+                      className="p-1.5 bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-xl transition-colors border border-slate-100"
+                      title="Share record"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button 
+                      onClick={() => deletePrediction(item.id)}
+                      className="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl transition-colors border border-slate-100"
+                      title="Delete record"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">
-                <Calendar className="h-4 w-4" />
-                {new Date(item.created_at).toLocaleDateString(undefined, {
-                  year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'
-                })}
-              </div>
+                <div className="mb-6 flex flex-col">
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 drop-shadow-sm">Predicted Value</span>
+                  <div className="text-4xl font-black text-slate-800 tracking-tight">
+                    ₹{item.predicted_price_lakh} <span className="text-xl text-slate-400 font-bold">L</span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-400 mt-1 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                    ₹{Math.round((item.predicted_price_lakh * 100000) / item.area_sqft).toLocaleString('en-IN')} / sq.ft
+                  </div>
+                </div>
 
-              <div className="mb-6">
-                <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-100/50 px-2 py-1 rounded-md">Predicted Price</span>
-                <div className="text-4xl font-black text-slate-800 mt-2">
-                  ₹{item.predicted_price_lakh} <span className="text-2xl text-slate-400">L</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm bg-white/50 p-4 rounded-2xl border border-white/60 shadow-inner">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-blue-100/80 rounded-lg text-blue-600">
-                    <Square className="h-3.5 w-3.5" />
+                <div className="grid grid-cols-2 gap-3 text-sm bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100/80">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 text-slate-600">
+                      <Square className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-slate-700 text-xs">{item.area_sqft} <span className="font-medium text-slate-500">sqft</span></span>
                   </div>
-                  <span className="font-bold text-slate-600">{item.area_sqft} sq ft</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-purple-100/80 rounded-lg text-purple-600">
-                    <MapPin className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 text-slate-600">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-slate-700 text-xs capitalize">{item.facing}</span>
                   </div>
-                  <span className="font-bold text-slate-600 capitalize">{item.facing}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-emerald-100/80 rounded-lg text-emerald-600">
-                    <BedDouble className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 text-slate-600">
+                      <BedDouble className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-slate-700 text-xs">{item.bedrooms} <span className="font-medium text-slate-500">BHK</span></span>
                   </div>
-                  <span className="font-bold text-slate-600">{item.bedrooms} BHK</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-amber-100/80 rounded-lg text-amber-600">
-                    <AlertCircle className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 text-slate-600">
+                      <AlertCircle className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-slate-700 text-xs">Floor {item.floor}</span>
                   </div>
-                  <span className="font-bold text-slate-600">Floor {item.floor}</span>
                 </div>
-              </div>
               </div>
             </motion.div>
           ))}

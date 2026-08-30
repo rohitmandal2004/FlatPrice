@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { ArrowRight, BrainCircuit, BarChart3, ShieldCheck, Database, Cog, LineChart, FileOutput, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import Hero3D from '../components/Hero3D';
 
 export default function LandingPage() {
   const containerVariants = {
@@ -23,8 +22,6 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col items-center relative overflow-hidden bg-background">
-      {/* 3D Background */}
-      <Hero3D />
 
       {/* Hero Section */}
       <section className="w-full py-20 md:py-32 lg:py-40 flex flex-col items-center text-center relative z-10">
