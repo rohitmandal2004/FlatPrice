@@ -1,8 +1,18 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, BakeShadows } from '@react-three/drei';
+import { OrbitControls, Environment, BakeShadows, Html } from '@react-three/drei';
 import { Building } from './Building3D';
 import * as THREE from 'three';
+import { Loader2 } from 'lucide-react';
+
+const CanvasLoader = () => (
+  <Html center>
+    <div className="flex flex-col items-center justify-center space-y-2">
+      <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest bg-emerald-50/80 px-2 py-1 rounded backdrop-blur-sm">Loading 3D</span>
+    </div>
+  </Html>
+);
 
 export default function Hero3D() {
   return (
@@ -13,7 +23,7 @@ export default function Hero3D() {
         performance={{ min: 0.5, max: 1 }} 
         gl={{ alpha: true, antialias: false }} // transparent background, no antialiasing for perf
       >
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<CanvasLoader />}>
           <Environment resolution={64} background={false}>
             <mesh>
               <sphereGeometry args={[100, 8, 8]} />

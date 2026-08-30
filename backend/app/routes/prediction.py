@@ -1,11 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.schemas import PredictionRequest, PredictionResponse
 from app.model_service import model_service
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/predict", response_model=PredictionResponse)
-def predict_price(req: PredictionRequest):
+@limiter.limit("10/minute")
+def predict_price(request: Request, req: PredictionRequest):
     try:
         predicted_price = model_service.predict(req)
         

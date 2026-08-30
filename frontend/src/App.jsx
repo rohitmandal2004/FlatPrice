@@ -14,6 +14,7 @@ const MLExplorerPage = React.lazy(() => import('./pages/MLExplorerPage'));
 const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
 const SignInPage = React.lazy(() => import('./pages/SignInPage'));
 const SignUpPage = React.lazy(() => import('./pages/SignUpPage'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
 export const preloadRoute = (path) => {
   if (path === '/predict') import('./pages/PredictionPage');
@@ -66,6 +67,9 @@ function App() {
                 </>
               } />
             </Route>
+            
+            {/* Catch-all 404 Route */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </React.Suspense>
         <Toaster position="top-right" />

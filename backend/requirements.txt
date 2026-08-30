@@ -8,8 +8,10 @@ python-multipart
 openpyxl
 pydantic
 python-dotenv
-
 gunicorn
-
 matplotlib
 seaborn
+flake8
+slowapi
+pytest
+httpx

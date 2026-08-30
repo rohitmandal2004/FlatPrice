@@ -19,6 +19,15 @@ Welcome to **FlatPredict AI**, a next-generation real-estate valuation platform.
 *   🎵 **Procedural Audio Engine:** Immersive UI sound design powered by the Web Audio API (ambient weather, interactive whooshes).
 *   📱 **Responsive & Shareable:** Seamlessly works on desktop and mobile, with native `navigator.share()` functionality.
 
+## 🏢 Enterprise Infrastructure
+
+To ensure production-readiness, the following advanced features are integrated:
+
+*   **API Rate Limiting:** The `/predict` endpoint is protected against scraping and DDoS attacks using `slowapi`, limiting requests to 10 per minute per IP.
+*   **Progressive Web App (PWA):** The frontend is configured with `vite-plugin-pwa`, allowing the application to be installed natively on desktop and mobile devices.
+*   **Model Caching:** Duplicate identical predictions bypass the CPU entirely using Python's native `@lru_cache`, returning instantaneous results from memory.
+*   **CI/CD Unit Testing:** The GitHub Actions pipeline is configured with `pytest` and `flake8` to automatically verify API health and model inference validity on every commit.
+
 ## 🛠️ Tech Stack
 
 **Frontend:**

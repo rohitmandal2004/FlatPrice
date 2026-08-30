@@ -350,7 +350,7 @@ export default function PredictionPage() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 id="prediction-report" 
-                className="bg-white/90 backdrop-blur-2xl border border-white shadow-xl rounded-[2rem] p-6 sm:p-8 space-y-6 relative overflow-hidden"
+                className="bg-white/90 backdrop-blur-2xl border border-white shadow-xl rounded-3xl p-4 sm:p-6 space-y-4 relative overflow-hidden"
               >
                   {/* Top Action Bar */}
                   <div className="flex flex-col gap-6 w-full pb-4 border-b border-slate-100/60 mb-4 relative">
@@ -391,81 +391,82 @@ export default function PredictionPage() {
                   </div>
                 </div>
 
-                {/* Price Section */}
-                <div className="text-center space-y-3">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated Property Value</div>
-                  <div className="text-5xl sm:text-6xl font-black text-slate-800 leading-tight bg-clip-text text-transparent bg-gradient-to-br from-slate-800 to-slate-600">
-                    ₹<AnimatedCounter value={result.predicted_price_lakh} /> <span className="text-2xl text-slate-400 font-bold">Lakh</span>
-                  </div>
-                  <div className="flex justify-center mt-1">
-                    <div className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-100">
-                      <TrendingUp className="w-3 h-3" />
-                      Range: ₹{getPriceRange(result.predicted_price_lakh).min}L - ₹{getPriceRange(result.predicted_price_lakh).max}L
+                <div className="flex flex-col lg:flex-row items-center lg:items-stretch gap-6 w-full">
+                  {/* Price Section */}
+                  <div className="flex flex-col justify-center text-center space-y-2 lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-100/60 pb-6 lg:pb-0 lg:pr-6">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated Property Value</div>
+                    <div className="text-4xl sm:text-5xl font-black text-slate-800 leading-tight bg-clip-text text-transparent bg-gradient-to-br from-slate-800 to-slate-600">
+                      ₹<AnimatedCounter value={result.predicted_price_lakh} /> <span className="text-xl text-slate-400 font-bold">Lakh</span>
                     </div>
-                  </div>
-                </div>
-
-                {/* Premium Price Breakdown */}
-                <div className="mt-8 pt-8 pb-6 border-t border-slate-100/60 max-w-3xl mx-auto w-full relative">
-                  <div className="absolute inset-0 opacity-10 flex items-center justify-center -z-10 bg-no-repeat bg-contain bg-center mix-blend-multiply pointer-events-none" style={{ backgroundImage: `url(/floor_plan_${Math.min(formData.bedrooms, 5)}bhk.jpg)` }}></div>
-                  <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 px-2">
-                    <div className="p-1.5 bg-emerald-100/80 rounded-md text-emerald-600 shadow-sm border border-emerald-200/50">
-                      <PieChart className="w-4 h-4" />
-                    </div>
-                    "Why this Price?" ML Breakdown
-                  </h3>
-                  <div className="bg-white/90 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-[2rem] p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-10">
-                    <div className="w-56 h-56 flex-shrink-0 relative">
-                      <div className="absolute inset-0 bg-emerald-400/10 rounded-full blur-2xl animate-pulse"></div>
-                      <ResponsiveContainer width="100%" height="100%" className="relative z-10 drop-shadow-2xl">
-                        {isChartMounted ? (
-                          <RechartsPieChart>
-                            <Pie
-                              data={getPriceBreakdown()}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={70}
-                              outerRadius={95}
-                              paddingAngle={5}
-                              cornerRadius={8}
-                              dataKey="value"
-                              stroke="none"
-                              isAnimationActive={true}
-                              animationDuration={1500}
-                              animationEasing="ease-out"
-                            >
-                              {getPriceBreakdown().map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.hex} className="hover:opacity-80 transition-opacity duration-300 cursor-pointer" />
-                              ))}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value) => [`₹${value.toFixed(2)} L`, 'Value']}
-                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                              itemStyle={{ color: '#1e293b' }}
-                            />
-                          </RechartsPieChart>
-                        ) : (
-                          <div className="w-full h-full rounded-full border-4 border-emerald-100/50 flex items-center justify-center animate-pulse" />
-                        )}
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Value</span>
-                        <span className="text-xl font-black text-slate-800 drop-shadow-sm">₹{result.predicted_price_lakh} L</span>
+                    <div className="flex justify-center mt-1">
+                      <div className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-100">
+                        <TrendingUp className="w-3 h-3" />
+                        Range: ₹{getPriceRange(result.predicted_price_lakh).min}L - ₹{getPriceRange(result.predicted_price_lakh).max}L
                       </div>
                     </div>
-                    
-                    <div className="flex-1 w-full space-y-3">
-                      {getPriceBreakdown().map((item, idx) => (
-                        <div key={idx} className="group flex items-center justify-between p-4 bg-white rounded-2xl transition-all duration-300 border border-slate-100 hover:border-emerald-200 hover:shadow-md cursor-pointer hover:-translate-y-0.5">
-                          <div className="flex items-center gap-4">
-                            <div className="w-4 h-4 rounded-full shadow-inner transform group-hover:scale-110 transition-all duration-300 relative" style={{ backgroundColor: item.hex }}>
-                              <div className="absolute inset-0 rounded-full blur-[4px] opacity-40 group-hover:opacity-70 transition-opacity" style={{ backgroundColor: item.hex }}></div>
-                            </div>
-                            <span className="text-[14px] font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{item.label}</span>
-                          </div>
-                          <span className="text-[15px] font-black text-slate-800 tracking-tight">₹{item.value.toFixed(2)} L</span>
+                  </div>
+
+                  {/* Premium Price Breakdown */}
+                  <div className="flex-1 w-full relative">
+                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 px-2">
+                      <div className="p-1 bg-emerald-100/80 rounded-md text-emerald-600 shadow-sm border border-emerald-200/50">
+                        <PieChart className="w-3.5 h-3.5" />
+                      </div>
+                      "Why this Price?" ML Breakdown
+                    </h3>
+                    <div className="bg-white/90 backdrop-blur-xl border border-white shadow-[0_4px_20px_rgb(0,0,0,0.06)] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-6">
+                      <div className="w-36 h-36 flex-shrink-0 relative">
+                        <div className="absolute inset-0 bg-emerald-400/10 rounded-full blur-2xl animate-pulse"></div>
+                        <ResponsiveContainer width="100%" height="100%" className="relative z-10 drop-shadow-lg">
+                          {isChartMounted ? (
+                            <RechartsPieChart>
+                              <Pie
+                                data={getPriceBreakdown()}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={45}
+                                outerRadius={65}
+                                paddingAngle={4}
+                                cornerRadius={6}
+                                dataKey="value"
+                                stroke="none"
+                                isAnimationActive={true}
+                                animationDuration={1500}
+                                animationEasing="ease-out"
+                              >
+                                {getPriceBreakdown().map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.hex} className="hover:opacity-80 transition-opacity duration-300 cursor-pointer" />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                formatter={(value) => [`₹${value.toFixed(2)} L`, 'Value']}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+                                itemStyle={{ color: '#1e293b' }}
+                              />
+                            </RechartsPieChart>
+                          ) : (
+                            <div className="w-full h-full rounded-full border-4 border-emerald-100/50 flex items-center justify-center animate-pulse" />
+                          )}
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Value</span>
+                          <span className="text-sm font-black text-slate-800 drop-shadow-sm">₹{result.predicted_price_lakh} L</span>
                         </div>
-                      ))}
+                      </div>
+                      
+                      <div className="flex-1 w-full space-y-2">
+                        {getPriceBreakdown().map((item, idx) => (
+                          <div key={idx} className="group flex items-center justify-between p-2.5 px-3 bg-white rounded-xl transition-all duration-300 border border-slate-100 hover:border-emerald-200 hover:shadow-sm cursor-pointer hover:-translate-y-0.5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-3 h-3 rounded-full shadow-inner transform group-hover:scale-110 transition-all duration-300 relative" style={{ backgroundColor: item.hex }}>
+                                <div className="absolute inset-0 rounded-full blur-[3px] opacity-40 group-hover:opacity-70 transition-opacity" style={{ backgroundColor: item.hex }}></div>
+                              </div>
+                              <span className="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{item.label}</span>
+                            </div>
+                            <span className="text-sm font-black text-slate-800 tracking-tight">₹{item.value.toFixed(2)} L</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
