@@ -15,7 +15,7 @@ export default function ValuationCertificate({ formData, result, certificateId =
   return (
     <div 
       id="valuation-certificate" 
-      className="bg-white text-slate-800 absolute -left-[9999px]" // Rendered off-screen
+      className="bg-white text-slate-800"
       style={{ 
         width: '794px', 
         height: '1123px', // Standard A4 proportions at 96dpi

@@ -136,10 +136,6 @@ export default function PredictionPage() {
     const toastId = toast.loading("Generating Official Certificate...");
     
     try {
-      // Temporarily bring the element into the viewport but behind everything
-      element.classList.remove('-left-[9999px]');
-      element.classList.add('left-0', 'top-0', '-z-50');
-
       // Ensure fonts are loaded before capturing
       await document.fonts.ready;
       
@@ -151,10 +147,6 @@ export default function PredictionPage() {
         pixelRatio: 2,
         backgroundColor: '#ffffff'
       });
-      
-      // Restore classes immediately
-      element.classList.add('-left-[9999px]');
-      element.classList.remove('left-0', 'top-0', '-z-50');
       
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -740,7 +732,9 @@ export default function PredictionPage() {
       )}
       
       {/* Hidden Certificate for PDF Generation */}
-      <ValuationCertificate formData={formData} result={result} certificateId={result?.id} />
+      <div className="fixed top-0 left-0 opacity-0 pointer-events-none -z-50">
+        <ValuationCertificate formData={formData} result={result} certificateId={result?.id} />
+      </div>
     </div>
   );
 }

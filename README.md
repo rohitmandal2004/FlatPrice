@@ -1,113 +1,63 @@
-# AI Flat Price Prediction System
+# 🏢 FlatPredict AI - Enterprise Property Valuation
 
-A complete, production-quality full-stack web application that predicts the estimated price of a flat in Lakhs based on its characteristics using Multiple Linear Regression.
+![GitHub Repo stars](https://img.shields.io/github/stars/rohitmandal2004/FlatPrice?style=social)
+![GitHub forks](https://img.shields.io/github/forks/rohitmandal2004/FlatPrice?style=social)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![React](https://img.shields.io/badge/React-18-blue)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100-009688)
 
-## Features
+Welcome to **FlatPredict AI**, a next-generation real-estate valuation platform. Powered by a Multiple Linear Regression Machine Learning model, this application calculates highly accurate property estimates based on dynamic architectural parameters, all wrapped in a stunning, high-performance 3D interface.
 
-- **Machine Learning Pipeline:** Data preprocessing, categorical encoding, and training using `scikit-learn`.
-- **FastAPI Backend:** High-performance REST API for serving the ML model and dataset statistics.
-- **React + Vite Frontend:** Modern, responsive UI with Tailwind CSS, featuring a beautiful dashboard, ML explorer, and interactive prediction form.
-- **Data Visualization:** Interactive charts using `Recharts` for model performance, feature importance, and dataset distribution.
-- **Supabase Integration:** SQL schema ready for authentication, prediction history, and row-level security.
+## ✨ God-Tier Features
 
-## Architecture
+*   🧠 **Advanced ML Valuation:** Highly accurate pricing model accounting for area, configuration, floor level, and facing premiums.
+*   🎮 **Interactive 3D Visualizer:** Explore an animated, fully optimized 3D environment rendered with React Three Fiber at a buttery smooth 60FPS.
+*   📜 **Enterprise PDF Certificates:** Generate beautifully formatted, legal-style A4 property valuation certificates with QR code verification.
+*   📊 **Rich Analytics Dashboard:** Visualize historical trends, price breakdowns, ROI projections, and EMI calculations in real-time.
+*   🔐 **Secure Authentication:** Integrated Clerk Auth with Supabase Postgres backend enforcing strict Row Level Security (RLS).
+*   🎵 **Procedural Audio Engine:** Immersive UI sound design powered by the Web Audio API (ambient weather, interactive whooshes).
+*   📱 **Responsive & Shareable:** Seamlessly works on desktop and mobile, with native `navigator.share()` functionality.
 
-1. **Frontend:** React, Vite, Tailwind CSS, React Router, Recharts, Lucide React
-2. **Backend:** FastAPI, Python, Pandas, scikit-learn, joblib
-3. **Database:** Supabase (PostgreSQL)
+## 🛠️ Tech Stack
 
-## Project Structure
+**Frontend:**
+*   **React 18** (Vite)
+*   **Tailwind CSS** (Styling & Layout)
+*   **React Three Fiber / Drei** (3D Rendering)
+*   **Framer Motion** (Micro-interactions & Animations)
+*   **Recharts** (Data Visualization)
+*   **Clerk** (Authentication)
 
-```text
-.
-├── backend/               # FastAPI application and ML pipeline
-│   ├── app/               # FastAPI routes and services
-│   ├── data/              # Excel dataset
-│   └── ml/                # Training script and artifacts
-├── frontend/              # React + Vite application
-│   └── src/               # React components, pages, and services
-└── supabase/              # Supabase SQL schema
-```
+**Backend:**
+*   **FastAPI** (Python backend)
+*   **Scikit-Learn** (ML Model)
+*   **Supabase** (PostgreSQL Database)
 
-## Setup & Installation
+## 🚀 Getting Started
 
-### 1. Backend Setup
+### Prerequisites
+Make sure you have `Node.js` and `Python 3.9+` installed on your machine.
 
-```bash
-cd backend
-python -m venv venv
-# On Windows: .\venv\Scripts\activate
-# On Mac/Linux: source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2. Frontend Setup
-
+### Frontend Setup
 ```bash
 cd frontend
 npm install
+npm run dev
 ```
 
-### 3. Environment Variables
-
-Create `.env` in both `backend` and `frontend` folders using the provided `.env.example` templates. Fill in your Supabase credentials.
-
-## Running Locally
-
-1. **Start Backend:**
-   ```bash
-   cd backend
-   python -m uvicorn app.main:app --reload --port 8000
-   ```
-
-2. **Start Frontend:**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-
-Open `http://localhost:5173` in your browser.
-
-## Deployment (Free Tiers)
-
-The backend is fully containerized using Docker and is ready to be deployed to modern cloud platforms. Here are step-by-step instructions for the best free options.
-
-### Option 1: Koyeb (Best for APIs, Never Sleeps)
-Koyeb offers a free Eco instance that does not spin down when inactive, making it perfect for a fast, responsive API.
-
-1. Create a free account at [koyeb.com](https://koyeb.com/)
-2. Click **Create App** and choose **GitHub**.
-3. Select your `FlatPrice` repository.
-4. Set the following configurations:
-   * **Builder:** Docker
-   * **Work Directory:** `/backend`
-   * **Ports:** Expose port `8000`
-5. Click **Deploy**. Koyeb will build your Dockerfile and give you a public URL (e.g., `https://your-app-name.koyeb.app`).
-6. Update your `VITE_API_URL` in your frontend's `.env` to point to this new URL.
-
-### Option 2: Hugging Face Spaces (Best for ML Labs)
-Since this is an AI/ML project, Hugging Face offers completely free Docker hosting. (Note: Your code is public by default on a free account).
-
-1. Create an account at [huggingface.co](https://huggingface.co/)
-2. Click your profile picture -> **New Space**.
-3. Name your space (e.g., `flat-price-predictor`).
-4. Select **Docker** as the Space SDK and **Blank** as the template.
-5. Create the Space.
-6. Hugging Face will provide you with Git instructions. Clone their empty repository to your computer, copy the contents of your `backend/` folder into it, and push it back to Hugging Face.
-7. Your API will be live at `https://huggingface.co/spaces/your-username/flat-price-predictor`. Update your frontend `.env` to match.
-
-## Training the Model
-
-To retrain the ML model (e.g., if you update the dataset in `backend/data/`):
-
+### Backend Setup
 ```bash
 cd backend
-python ml/train.py
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
 ```
 
-This script will load the dataset, run the preprocessing pipeline, evaluate the model (R², MAE, MSE, RMSE), and save the updated `.joblib` model and plots to `backend/ml/artifacts/`.
+## 🤝 Contributing
+Contributions, issues and feature requests are welcome! 
+Feel free to check [issues page](https://github.com/rohitmandal2004/FlatPrice/issues).
 
-## Disclaimer
-
-This project is an educational demonstration of Multiple Linear Regression. The predictions generated by the model are based on a small sample dataset (100 records) and **should not** be treated as actual market valuation or financial advice.
-# FlatPrice
+## 📝 License
+This project is [MIT](https://opensource.org/licenses/MIT) licensed.
