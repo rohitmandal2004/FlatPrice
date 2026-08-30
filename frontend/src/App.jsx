@@ -15,6 +15,12 @@ const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
 const SignInPage = React.lazy(() => import('./pages/SignInPage'));
 const SignUpPage = React.lazy(() => import('./pages/SignUpPage'));
 
+export const preloadRoute = (path) => {
+  if (path === '/predict') import('./pages/PredictionPage');
+  if (path === '/dashboard') import('./pages/DashboardPage');
+  if (path === '/explore') import('./pages/MLExplorerPage');
+};
+
 const PageLoader = () => (
   <div className="flex h-[70vh] w-full flex-col items-center justify-center space-y-4">
     <div className="relative">

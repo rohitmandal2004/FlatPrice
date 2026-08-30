@@ -6,6 +6,7 @@ import { cn } from '../lib/utils';
 import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import Logo from '../components/Logo';
 import { Dock } from '../components/ui/dock-two';
+import { preloadRoute } from '../App';
 
 export default function MainLayout() {
   const location = useLocation();
@@ -36,6 +37,7 @@ export default function MainLayout() {
                   <Link
                     key={item.name}
                     to={item.href}
+                    onMouseEnter={() => preloadRoute(item.href)}
                     className={cn(
                       "relative flex items-center gap-2 text-sm font-bold px-4 py-2 transition-colors duration-300 rounded-full",
                       isActive ? "text-emerald-700" : "text-slate-500 hover:text-emerald-600"

@@ -71,7 +71,7 @@ const Store = ({ position, color, rotY = 0 }) => (
     {/* Glass Front */}
     <mesh position={[0, 1.2, 1.51]}>
       <planeGeometry args={[3, 1.8]} />
-      <meshPhysicalMaterial color="#38bdf8" transmission={0.9} transparent opacity={1} roughness={0.1} />
+      <meshStandardMaterial color="#38bdf8" transparent opacity={0.6} roughness={0.1} />
     </mesh>
     {/* Awning */}
     <mesh position={[0, 2.2, 1.9]} rotation={[-Math.PI / 6, 0, 0]}>
@@ -214,18 +214,7 @@ const FlatSegment = ({ position, facing, floor, isSelected, onSelect, width = 2.
           <boxGeometry args={[0.1, 0.9, 1.0]} />
           <meshStandardMaterial color={mainColor} roughness={0.5} />
         </mesh>
-        
-        {/* Interior Furniture (TV & Sofa) */}
-        {/* Glowing TV on the back wall */}
-        <mesh position={[0, 0.1, -0.48]}>
-          <planeGeometry args={[1.2, 0.6]} />
-          <meshStandardMaterial color="#000000" emissive="#38bdf8" emissiveIntensity={0.5} />
-        </mesh>
-        {/* Sofa */}
-        <mesh position={[0, -0.25, -0.1]}>
-          <boxGeometry args={[1.4, 0.2, 0.5]} />
-          <meshStandardMaterial color="#334155" />
-        </mesh>
+        {/* Interior removed for performance */}
       </group>
 
       {/* Balcony Base */}
@@ -243,15 +232,15 @@ const FlatSegment = ({ position, facing, floor, isSelected, onSelect, width = 2.
       {/* Advanced Glass Railings (Optimized for Smooth FPS) */}
       <mesh position={[0, -0.15, 1.21]}>
         <planeGeometry args={[width, 0.5]} />
-        <meshStandardMaterial color={glassColor} transparent opacity={0.4} roughness={0.1} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={glassColor} transparent opacity={0.4} side={THREE.DoubleSide} />
       </mesh>
       <mesh position={[-halfWidth - 0.01, -0.15, 0.9]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[0.6, 0.5]} />
-        <meshStandardMaterial color={glassColor} transparent opacity={0.4} roughness={0.1} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={glassColor} transparent opacity={0.4} side={THREE.DoubleSide} />
       </mesh>
       <mesh position={[halfWidth + 0.01, -0.15, 0.9]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[0.6, 0.5]} />
-        <meshStandardMaterial color={glassColor} transparent opacity={0.4} roughness={0.1} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={glassColor} transparent opacity={0.4} side={THREE.DoubleSide} />
       </mesh>
 
       {/* Upgraded Transparent Sliding Door */}
@@ -274,7 +263,7 @@ const FlatSegment = ({ position, facing, floor, isSelected, onSelect, width = 2.
         {/* Glass Window Pane */}
         <mesh position={[0, 0, 0]}>
           <planeGeometry args={[width * 0.6, 0.7]} />
-          <meshStandardMaterial color="#bae6fd" transparent opacity={0.3} roughness={0.1} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#bae6fd" transparent opacity={0.3} side={THREE.DoubleSide} />
         </mesh>
       </group>
     </group>
@@ -409,7 +398,7 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
       {/* Swimming Pool */}
       <mesh position={[1.5, 0.72, 2.5]}>
         <boxGeometry args={[2, 0.05, 2.5]} />
-        <meshPhysicalMaterial color="#06b6d4" transmission={0.9} roughness={0.1} ior={1.33} thickness={0.5} emissive="#0891b2" emissiveIntensity={0.3} />
+        <meshStandardMaterial color="#06b6d4" transparent opacity={0.8} roughness={0.1} emissive="#0891b2" emissiveIntensity={0.3} />
       </mesh>
       <Sparkles position={[1.5, 1.2, 2.5]} count={40} scale={2.5} size={2} color="#67e8f9" speed={0.4} opacity={0.6} />
       <mesh position={[1.5, 0.7, 2.5]}>
@@ -571,7 +560,7 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
         </mesh>
         <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[3, 5]} />
-          <meshPhysicalMaterial color="#0284c7" transmission={0.9} ior={1.33} />
+          <meshStandardMaterial color="#0284c7" transparent opacity={0.8} />
         </mesh>
         {/* Sunbeds */}
         <mesh position={[-1, 0.1, 3.2]} rotation={[0, 0, 0]}>
@@ -692,57 +681,57 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
         </mesh>
         <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[5, 3]} />
-          <meshPhysicalMaterial color="#0ea5e9" transmission={0.9} ior={1.33} />
+          <meshStandardMaterial color="#0ea5e9" transparent opacity={0.8} />
         </mesh>
       </group>
 
       {/* Outer Road (Front) */}
-      <mesh position={[-12, 0.05, 0]}>
+      <mesh position={[-13.5, 0.05, 0]}>
         <boxGeometry args={[4, 0.05, 50]} />
         <meshStandardMaterial color="#1e293b" roughness={0.9} />
       </mesh>
       {/* Dashed line */}
       {Array.from({length: 25}).map((_, i) => (
-        <mesh key={`dash-${i}`} position={[-12, 0.08, -24 + (i * 2)]}>
+        <mesh key={`dash-${i}`} position={[-13.5, 0.08, -24 + (i * 2)]}>
           <boxGeometry args={[0.1, 0.01, 1]} />
           <meshStandardMaterial color="#ffffff" />
         </mesh>
       ))}
       
       {/* Animated Cars */}
-      <Car initialPosition={[-11, 0.05, -15]} direction={1} color="#ef4444" />
-      <Car initialPosition={[-13, 0.05, 5]} direction={-1} color="#3b82f6" />
-      <Car initialPosition={[-11, 0.05, 0]} direction={1} color="#eab308" />
-      <Car initialPosition={[-13, 0.05, -10]} direction={-1} color="#a855f7" />
+      <Car initialPosition={[-12.5, 0.05, -15]} direction={1} color="#ef4444" />
+      <Car initialPosition={[-14.5, 0.05, 5]} direction={-1} color="#3b82f6" />
+      <Car initialPosition={[-12.5, 0.05, 0]} direction={1} color="#eab308" />
+      <Car initialPosition={[-14.5, 0.05, -10]} direction={-1} color="#a855f7" />
 
       {/* Sidewalks */}
-      <mesh position={[-9, 0.08, 0]}>
+      <mesh position={[-10.5, 0.08, 0]}>
         <boxGeometry args={[2, 0.1, 50]} />
         <meshStandardMaterial color="#cbd5e1" />
       </mesh>
-      <mesh position={[-15, 0.08, 0]}>
+      <mesh position={[-16.5, 0.08, 0]}>
         <boxGeometry args={[2, 0.1, 50]} />
         <meshStandardMaterial color="#cbd5e1" />
       </mesh>
 
       {/* Animated Humanoids on sidewalk */}
-      <Humanoid initialPosition={[-9, 0.13, -5]} offset={0} />
-      <Humanoid initialPosition={[-9, 0.13, 5]} offset={2} />
-      <Humanoid initialPosition={[-15, 0.13, 0]} offset={1} />
-      <Humanoid initialPosition={[-15, 0.13, 8]} offset={3} />
-      <Humanoid initialPosition={[-9, 0.13, -12]} offset={4} />
+      <Humanoid initialPosition={[-10.5, 0.13, -5]} offset={0} />
+      <Humanoid initialPosition={[-10.5, 0.13, 5]} offset={2} />
+      <Humanoid initialPosition={[-16.5, 0.13, 0]} offset={1} />
+      <Humanoid initialPosition={[-16.5, 0.13, 8]} offset={3} />
+      <Humanoid initialPosition={[-10.5, 0.13, -12]} offset={4} />
 
       {/* Visitors entering and leaving the building */}
-      <VisitorHumanoid initialPosition={[-9, 0.13, 1]} offset={0} isLeaving={false} />
-      <VisitorHumanoid initialPosition={[-9, 0.13, -1]} offset={4} isLeaving={false} />
+      <VisitorHumanoid initialPosition={[-10.5, 0.13, 1]} offset={0} isLeaving={false} />
+      <VisitorHumanoid initialPosition={[-10.5, 0.13, -1]} offset={4} isLeaving={false} />
       
-      <VisitorHumanoid initialPosition={[-9, 0.13, 0]} offset={2} isLeaving={true} />
-      <VisitorHumanoid initialPosition={[-9, 0.13, 2]} offset={6} isLeaving={true} />
+      <VisitorHumanoid initialPosition={[-10.5, 0.13, 0]} offset={2} isLeaving={true} />
+      <VisitorHumanoid initialPosition={[-10.5, 0.13, 2]} offset={6} isLeaving={true} />
 
       {/* Commercial Stores across the street */}
-      <Store position={[-18, 0, 8]} color="#fcd34d" rotY={Math.PI / 2} />
-      <Store position={[-18, 0, -2]} color="#f472b6" rotY={Math.PI / 2} />
-      <Store position={[-18, 0, -12]} color="#2dd4bf" rotY={Math.PI / 2} />
+      <Store position={[-19.5, 0, 8]} color="#fcd34d" rotY={Math.PI / 2} />
+      <Store position={[-19.5, 0, -2]} color="#f472b6" rotY={Math.PI / 2} />
+      <Store position={[-19.5, 0, -12]} color="#2dd4bf" rotY={Math.PI / 2} />
       
       {/* Expanded Park (East) */}
       <mesh position={[12, 0, 0]}>
@@ -752,7 +741,7 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
       {/* Park Pond */}
       <mesh position={[12, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[3.5, 3.5, 0.05, 32]} />
-        <meshPhysicalMaterial color="#0ea5e9" transmission={0.9} ior={1.33} />
+        <meshStandardMaterial color="#0ea5e9" transparent opacity={0.8} />
       </mesh>
       {/* Park Benches */}
       <mesh position={[8, 0.2, 0]} rotation={[0, Math.PI / 2, 0]}>
@@ -798,20 +787,18 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
             
             <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
               {isSelected ? (
-                <Float speed={3} rotationIntensity={0} floatIntensity={1} floatingRange={[-0.1, 0.1]}>
-                  <Text
-                    position={[0, 0, 0]}
-                    fontSize={0.7}
-                    color="#10b981"
-                    fontWeight="black"
-                    anchorX="center"
-                    anchorY="middle"
-                    outlineWidth={0.03}
-                    outlineColor="#ffffff"
-                  >
-                    Floor {i + 1}
-                  </Text>
-                </Float>
+                <Text
+                  position={[0, 0, 0]}
+                  fontSize={0.7}
+                  color="#10b981"
+                  fontWeight="black"
+                  anchorX="center"
+                  anchorY="middle"
+                  outlineWidth={0.03}
+                  outlineColor="#ffffff"
+                >
+                  Floor {i + 1}
+                </Text>
               ) : (
                 <Text
                   position={[0, 0, 0]}
@@ -840,10 +827,9 @@ export default React.memo(function Building3D({ formData, onSelectFlat }) {
       <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-slate-700 pointer-events-none transition-opacity group-hover:opacity-100 opacity-70">
         Select Floor & Facing (Rotate & Click)
       </div>
-      <Canvas shadows dpr={[1, 1.5]} camera={{ position: [40, 30, 50], fov: 45 }} performance={{ min: 0.5 }}>
+      <Canvas dpr={1} camera={{ position: [40, 30, 50], fov: 45 }} performance={{ min: 0.5, max: 1 }} frameloop="always">
         <React.Suspense fallback={null}>
-          <BakeShadows />
-          <Environment resolution={256} background={false}>
+          <Environment resolution={128} background={false}>
             <mesh>
               <sphereGeometry args={[100, 16, 16]} />
               <meshBasicMaterial color="#e0f2fe" side={THREE.BackSide} />
@@ -855,23 +841,11 @@ export default React.memo(function Building3D({ formData, onSelectFlat }) {
             position={[15, 25, 20]} 
             intensity={2.5} 
             color="#fffbeb"
-            castShadow 
-            shadow-mapSize={[2048, 2048]} 
-            shadow-camera-far={60} 
-            shadow-camera-left={-25} 
-            shadow-camera-right={25} 
-            shadow-camera-top={25} 
-            shadow-camera-bottom={-25} 
-            shadow-bias={-0.0005}
           />
           <directionalLight position={[-15, 10, -20]} intensity={1.5} color="#38bdf8" />
-          <directionalLight position={[15, 5, -20]} intensity={1} color="#818cf8" />
           <hemisphereLight skyColor="#bae6fd" groundColor="#64748b" intensity={0.8} />
-          <Sparkles count={150} scale={25} size={1.5} speed={0.2} opacity={0.3} color="#ffffff" />
           
           <Building formData={formData} onSelectFlat={onSelectFlat} numFloors={14} />
-          
-          <ContactShadows position={[0, -0.99, 0]} opacity={0.7} scale={50} blur={2.5} far={4} color="#0f172a" frames={1} resolution={512} />
           
           <OrbitControls 
             enablePan={false} 

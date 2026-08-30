@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   // Use real scatter data from the backend and calculate best fit line
   const scatterData = React.useMemo(() => {
-    if (!stats || !stats.scatter_data) return [];
+    if (!isChartMounted || !stats || !stats.scatter_data) return [];
     
     // Sort by area for the line chart to render properly from left to right
     const data = [...stats.scatter_data].sort((a, b) => a.area - b.area);
@@ -58,7 +58,7 @@ export default function DashboardPage() {
       ...p,
       bestFitPrice: m * p.area + c
     }));
-  }, [stats]);
+  }, [stats, isChartMounted]);
 
   if (loading) {
     return <div className="flex h-[50vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
