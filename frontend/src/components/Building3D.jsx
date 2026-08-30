@@ -36,7 +36,7 @@ const sharedMaterials = {
 };
 // ----------------------------------------------
 
-const Car = ({ initialPosition, direction, color }) => {
+const Car = ({ initialPosition, direction, color, isNight }) => {
   const ref = useRef();
   useFrame((state, delta) => {
     if (!ref.current) return;
@@ -58,6 +58,30 @@ const Car = ({ initialPosition, direction, color }) => {
         [-0.6, 0.6].map((z) => (
           <mesh key={`wheel-${x}-${z}`} position={[x, 0.15, z]} rotation={[0, 0, Math.PI / 2]} scale={[0.15, 0.1, 0.15]} geometry={sharedGeometries.cylinder} material={sharedMaterials.carWheel} />
         ))
+      )}
+      {isNight && (
+        <>
+          {/* Headlights */}
+          <pointLight position={[-0.25, 0.4, 0.9]} intensity={1.2} color="#fffbeb" distance={8} decay={2} />
+          <pointLight position={[0.25, 0.4, 0.9]} intensity={1.2} color="#fffbeb" distance={8} decay={2} />
+          <mesh position={[-0.25, 0.4, 0.91]}>
+             <planeGeometry args={[0.2, 0.1]} />
+             <meshBasicMaterial color="#ffffff" />
+          </mesh>
+          <mesh position={[0.25, 0.4, 0.91]}>
+             <planeGeometry args={[0.2, 0.1]} />
+             <meshBasicMaterial color="#ffffff" />
+          </mesh>
+          {/* Taillights */}
+          <mesh position={[-0.25, 0.4, -0.91]} rotation={[0, Math.PI, 0]}>
+             <planeGeometry args={[0.2, 0.1]} />
+             <meshBasicMaterial color="#ef4444" />
+          </mesh>
+          <mesh position={[0.25, 0.4, -0.91]} rotation={[0, Math.PI, 0]}>
+             <planeGeometry args={[0.2, 0.1]} />
+             <meshBasicMaterial color="#ef4444" />
+          </mesh>
+        </>
       )}
     </group>
   );
@@ -894,10 +918,10 @@ export const Building = React.memo(({ formData = {}, onSelectFlat = () => { }, o
       ))}
 
       {/* Animated Cars */}
-      <Car initialPosition={[-12.5, 0.05, -15]} direction={1} color="#ef4444" />
-      <Car initialPosition={[-14.5, 0.05, 5]} direction={-1} color="#3b82f6" />
-      <Car initialPosition={[-12.5, 0.05, 0]} direction={1} color="#eab308" />
-      <Car initialPosition={[-14.5, 0.05, -10]} direction={-1} color="#a855f7" />
+      <Car initialPosition={[-12.5, 0.05, -15]} direction={1} color="#ef4444" isNight={isNight} />
+      <Car initialPosition={[-14.5, 0.05, 5]} direction={-1} color="#3b82f6" isNight={isNight} />
+      <Car initialPosition={[-12.5, 0.05, 0]} direction={1} color="#eab308" isNight={isNight} />
+      <Car initialPosition={[-14.5, 0.05, -10]} direction={-1} color="#a855f7" isNight={isNight} />
 
       {/* Sidewalks */}
       <mesh position={[-10.5, 0.08, 0]}>
@@ -1146,12 +1170,25 @@ export default React.memo(function Building3D({ formData, onSelectFlat, predicte
           {/* Dynamic Lighting based on Theme */}
           {isNight ? (
             <>
+              {/* Stars in the Night Sky */}
+              <Sparkles count={500} scale={150} size={1} color="#f8fafc" speed={0.1} opacity={0.6} />
+              
               <ambientLight intensity={0.2} />
               <directionalLight position={[15, 25, 20]} intensity={0.5} color="#818cf8" />
               <directionalLight position={[-15, 10, -20]} intensity={0.3} color="#4f46e5" />
               <hemisphereLight skyColor="#0f172a" groundColor="#1e293b" intensity={0.4} />
+              {/* The Moon */}
+              <mesh position={[-40, 50, -40]}>
+                <sphereGeometry args={[8, 32, 32]} />
+                <meshBasicMaterial color="#fef08a" />
+              </mesh>
+              {/* Moon Halo */}
+              <mesh position={[-40, 50, -40]}>
+                <sphereGeometry args={[12, 32, 32]} />
+                <meshBasicMaterial color="#fef08a" transparent opacity={0.15} />
+              </mesh>
               {/* Moon Glow */}
-              <pointLight position={[20, 40, 30]} intensity={1.5} color="#c7d2fe" distance={100} decay={2} />
+              <pointLight position={[-40, 50, -40]} intensity={3} color="#c7d2fe" distance={200} decay={2} />
             </>
           ) : (
             <>

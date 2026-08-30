@@ -414,9 +414,9 @@ export default function PredictionPage() {
                     </div>
                     "Why this Price?" ML Breakdown
                   </h3>
-                  <div className="bg-white/40 backdrop-blur-md border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-10">
+                  <div className="bg-white/90 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-[2rem] p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-10">
                     <div className="w-56 h-56 flex-shrink-0 relative">
-                      <div className="absolute inset-0 bg-emerald-400/20 rounded-full blur-2xl animate-pulse"></div>
+                      <div className="absolute inset-0 bg-emerald-400/10 rounded-full blur-2xl animate-pulse"></div>
                       <ResponsiveContainer width="100%" height="100%" className="relative z-10 drop-shadow-2xl">
                         {isChartMounted ? (
                           <RechartsPieChart>
@@ -456,7 +456,7 @@ export default function PredictionPage() {
                     
                     <div className="flex-1 w-full space-y-3">
                       {getPriceBreakdown().map((item, idx) => (
-                        <div key={idx} className="group flex items-center justify-between p-4 bg-white/50 backdrop-blur hover:bg-white/90 rounded-2xl transition-all duration-300 border border-white/60 hover:border-emerald-200 hover:shadow-md cursor-pointer hover:-translate-y-0.5">
+                        <div key={idx} className="group flex items-center justify-between p-4 bg-white rounded-2xl transition-all duration-300 border border-slate-100 hover:border-emerald-200 hover:shadow-md cursor-pointer hover:-translate-y-0.5">
                           <div className="flex items-center gap-4">
                             <div className="w-4 h-4 rounded-full shadow-inner transform group-hover:scale-110 transition-all duration-300 relative" style={{ backgroundColor: item.hex }}>
                               <div className="absolute inset-0 rounded-full blur-[4px] opacity-40 group-hover:opacity-70 transition-opacity" style={{ backgroundColor: item.hex }}></div>
