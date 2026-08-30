@@ -1,18 +1,10 @@
 import React, { useState } from 'react';
 
 export default function Interior360Viewer({ bhk, onClose }) {
-  const [currentBhk, setCurrentBhk] = useState(bhk > 3 ? 3 : bhk);
+  const [currentBhk, setCurrentBhk] = useState(Math.min(bhk, 5));
 
   const getImageUrl = (b) => {
-    switch (b) {
-      case 1:
-        return "/floor_plan_1bhk.jpg";
-      case 2:
-        return "/floor_plan_2bhk.jpg";
-      case 3:
-      default:
-        return "/floor_plan_3bhk.jpg";
-    }
+    return `/floor_plan_${Math.min(b, 5)}bhk.jpg`;
   };
 
   return (

@@ -1,7 +1,40 @@
-import React, { useState, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Text, Environment, Float, Sparkles, Billboard, BakeShadows, Preload } from '@react-three/drei';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, ContactShadows, Text, Environment, Float, Sparkles, Billboard, BakeShadows, Preload, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { playClickSound, playWhooshSound, startRainSound, stopRainSound } from '../utils/audio';
+
+// --- SHARED GLOBALS FOR MAXIMUM PERFORMANCE ---
+const sharedGeometries = {
+  box: new THREE.BoxGeometry(1, 1, 1),
+  plane: new THREE.PlaneGeometry(1, 1),
+  cylinder: new THREE.CylinderGeometry(1, 1, 1, 16),
+  cone: new THREE.ConeGeometry(1, 1, 8),
+  sphere: new THREE.SphereGeometry(1, 16, 16)
+};
+
+const sharedMaterials = {
+  hitbox: new THREE.MeshBasicMaterial({ visible: false }),
+  flatMainDef: new THREE.MeshStandardMaterial({ color: '#475569', roughness: 0.5 }),
+  flatMainHov: new THREE.MeshStandardMaterial({ color: '#047857', roughness: 0.5 }),
+  flatMainSel: new THREE.MeshStandardMaterial({ color: '#064e3b', roughness: 0.5 }),
+  flatGlassDef: new THREE.MeshBasicMaterial({ color: '#e0f2fe', transparent: true, opacity: 0.4, depthWrite: false }),
+  flatGlassSel: new THREE.MeshBasicMaterial({ color: '#34d399', transparent: true, opacity: 0.4, depthWrite: false }),
+  flatFloor: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.8 }),
+  flatCeil: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.9 }),
+  flatTrim: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, metalness: 0.1 }),
+  doorFrame: new THREE.MeshStandardMaterial({ color: '#0f172a' }),
+  doorGlass: new THREE.MeshBasicMaterial({ color: '#bae6fd', transparent: true, opacity: 0.3, depthWrite: false }),
+  treeTrunk: new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.9 }),
+  treeLeaves1: new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.9 }),
+  treeLeaves2: new THREE.MeshStandardMaterial({ color: '#166534', roughness: 0.9 }),
+  carRoof: new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.1, metalness: 0.8 }),
+  carWheel: new THREE.MeshStandardMaterial({ color: '#111', roughness: 0.9 }),
+  humanHead: new THREE.MeshStandardMaterial({ color: '#fcd34d' }),
+  humanBody: new THREE.MeshStandardMaterial({ color: '#3b82f6' }),
+  visitorBody: new THREE.MeshStandardMaterial({ color: '#ef4444' }),
+};
+// ----------------------------------------------
 
 const Car = ({ initialPosition, direction, color }) => {
   const ref = useRef();
@@ -15,22 +48,15 @@ const Car = ({ initialPosition, direction, color }) => {
   return (
     <group ref={ref} position={initialPosition} rotation={[0, direction > 0 ? 0 : Math.PI, 0]}>
       {/* Body */}
-      <mesh position={[0, 0.3, 0]}>
-        <boxGeometry args={[0.8, 0.4, 1.8]} />
+      <mesh position={[0, 0.3, 0]} scale={[0.8, 0.4, 1.8]} geometry={sharedGeometries.box}>
         <meshStandardMaterial color={color} roughness={0.3} metalness={0.6} />
       </mesh>
       {/* Roof */}
-      <mesh position={[0, 0.65, -0.1]}>
-        <boxGeometry args={[0.7, 0.3, 1]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.1} metalness={0.8} />
-      </mesh>
+      <mesh position={[0, 0.65, -0.1]} scale={[0.7, 0.3, 1]} geometry={sharedGeometries.box} material={sharedMaterials.carRoof} />
       {/* Wheels */}
       {[-0.45, 0.45].map((x) => 
         [-0.6, 0.6].map((z) => (
-          <mesh key={`wheel-${x}-${z}`} position={[x, 0.15, z]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.15, 0.15, 0.1, 16]} />
-            <meshStandardMaterial color="#111" roughness={0.9} />
-          </mesh>
+          <mesh key={`wheel-${x}-${z}`} position={[x, 0.15, z]} rotation={[0, 0, Math.PI / 2]} scale={[0.15, 0.1, 0.15]} geometry={sharedGeometries.cylinder} material={sharedMaterials.carWheel} />
         ))
       )}
     </group>
@@ -50,32 +76,23 @@ const Humanoid = ({ initialPosition, offset }) => {
 
   return (
     <group ref={ref} position={initialPosition}>
-      <mesh position={[0, 0.3, 0]}>
-        <cylinderGeometry args={[0.12, 0.12, 0.4]} />
-        <meshStandardMaterial color="#3b82f6" />
-      </mesh>
-      <mesh position={[0, 0.6, 0]}>
-        <sphereGeometry args={[0.15]} />
-        <meshStandardMaterial color="#fcd34d" />
-      </mesh>
+      <mesh position={[0, 0.3, 0]} scale={[0.12, 0.4, 0.12]} geometry={sharedGeometries.cylinder} material={sharedMaterials.humanBody} />
+      <mesh position={[0, 0.6, 0]} scale={[0.15, 0.15, 0.15]} geometry={sharedGeometries.sphere} material={sharedMaterials.humanHead} />
     </group>
   );
 };
 
 const Store = ({ position, color, rotY = 0 }) => (
   <group position={position} rotation={[0, rotY, 0]}>
-    <mesh position={[0, 1.5, 0]}>
-      <boxGeometry args={[4, 3, 3]} />
+    <mesh position={[0, 1.5, 0]} scale={[4, 3, 3]} geometry={sharedGeometries.box}>
       <meshStandardMaterial color={color} roughness={0.8} />
     </mesh>
     {/* Glass Front */}
-    <mesh position={[0, 1.2, 1.51]}>
-      <planeGeometry args={[3, 1.8]} />
+    <mesh position={[0, 1.2, 1.51]} scale={[3, 1.8, 1]} geometry={sharedGeometries.plane}>
       <meshStandardMaterial color="#38bdf8" transparent opacity={0.6} roughness={0.1} />
     </mesh>
     {/* Awning */}
-    <mesh position={[0, 2.2, 1.9]} rotation={[-Math.PI / 6, 0, 0]}>
-      <boxGeometry args={[3.8, 0.1, 1]} />
+    <mesh position={[0, 2.2, 1.9]} rotation={[-Math.PI / 6, 0, 0]} scale={[3.8, 0.1, 1]} geometry={sharedGeometries.box}>
       <meshStandardMaterial color="#ef4444" />
     </mesh>
   </group>
@@ -103,14 +120,8 @@ const VisitorHumanoid = ({ initialPosition, offset, isLeaving = false }) => {
 
   return (
     <group ref={ref} position={initialPosition} rotation={[0, isLeaving ? Math.PI / 2 : -Math.PI / 2, 0]}>
-      <mesh position={[0, 0.3, 0]}>
-        <cylinderGeometry args={[0.12, 0.12, 0.4]} />
-        <meshStandardMaterial color="#ef4444" />
-      </mesh>
-      <mesh position={[0, 0.6, 0]}>
-        <sphereGeometry args={[0.15]} />
-        <meshStandardMaterial color="#fcd34d" />
-      </mesh>
+      <mesh position={[0, 0.3, 0]} scale={[0.12, 0.4, 0.12]} geometry={sharedGeometries.cylinder} material={sharedMaterials.visitorBody} />
+      <mesh position={[0, 0.6, 0]} scale={[0.15, 0.15, 0.15]} geometry={sharedGeometries.sphere} material={sharedMaterials.humanHead} />
     </group>
   );
 };
@@ -120,19 +131,16 @@ const House = ({ position, color, rotY = 0, floors = 1 }) => {
     <group position={position} rotation={[0, rotY, 0]}>
       {/* Base(s) */}
       {Array.from({length: floors}).map((_, i) => (
-        <mesh key={`floor-${i}`} position={[0, 0.5 + i * 1, 0]}>
-          <boxGeometry args={[3, 1, 3]} />
+        <mesh key={`floor-${i}`} position={[0, 0.5 + i * 1, 0]} scale={[3, 1, 3]} geometry={sharedGeometries.box}>
           <meshStandardMaterial color={color} roughness={0.9} />
         </mesh>
       ))}
       {/* Roof */}
-      <mesh position={[0, 1.3 + (floors - 1) * 1, 0]} rotation={[0, Math.PI / 4, 0]}>
-        <coneGeometry args={[2.5, 1, 4]} />
+      <mesh position={[0, 1.3 + (floors - 1) * 1, 0]} rotation={[0, Math.PI / 4, 0]} scale={[2.5, 1, 4]} geometry={sharedGeometries.cone}>
         <meshStandardMaterial color="#334155" roughness={0.9} />
       </mesh>
       {/* Door */}
-      <mesh position={[0, 0.4, 1.51]}>
-        <boxGeometry args={[0.6, 0.8, 0.05]} />
+      <mesh position={[0, 0.4, 1.51]} scale={[0.6, 0.8, 0.05]} geometry={sharedGeometries.box}>
         <meshStandardMaterial color="#1e293b" />
       </mesh>
     </group>
@@ -142,140 +150,181 @@ const House = ({ position, color, rotY = 0, floors = 1 }) => {
 const Tree = ({ position, scale = 1 }) => {
   return (
     <group position={position} scale={scale}>
-      <mesh position={[0, 0.4, 0]}>
-        <cylinderGeometry args={[0.1, 0.15, 0.8]} />
-        <meshStandardMaterial color="#78350f" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 1.2, 0]}>
-        <coneGeometry args={[0.8, 1.5, 8]} />
-        <meshStandardMaterial color="#15803d" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 1.8, 0]}>
-        <coneGeometry args={[0.6, 1.2, 8]} />
-        <meshStandardMaterial color="#166534" roughness={0.9} />
-      </mesh>
+      <mesh position={[0, 0.4, 0]} scale={[0.1, 0.8, 0.1]} geometry={sharedGeometries.cylinder} material={sharedMaterials.treeTrunk} />
+      <mesh position={[0, 1.2, 0]} scale={[0.8, 1.5, 0.8]} geometry={sharedGeometries.cone} material={sharedMaterials.treeLeaves1} />
+      <mesh position={[0, 1.8, 0]} scale={[0.6, 1.2, 0.6]} geometry={sharedGeometries.cone} material={sharedMaterials.treeLeaves2} />
     </group>
   );
 };
 
-const FlatSegment = ({ position, facing, floor, isSelected, onSelect, width = 2.7 }) => {
+const WeatherSystem = ({ type }) => {
+  const meshRef = useRef();
+  // Drastically reduced particle count for maximum performance (buttery smooth)
+  const count = type === 'rain' ? 800 : 400;
+  
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const particles = useMemo(() => {
+    const temp = [];
+    for (let i = 0; i < count; i++) {
+      const x = (Math.random() - 0.5) * 60;
+      const y = Math.random() * 40;
+      const z = (Math.random() - 0.5) * 60;
+      const speed = type === 'rain' ? 0.3 + Math.random() * 0.2 : 0.02 + Math.random() * 0.03;
+      temp.push({ x, y, z, speed, initialX: x });
+    }
+    return temp;
+  }, [count, type]);
+
+  useFrame((state) => {
+    if (!meshRef.current || type === 'clear') return;
+    const time = state.clock.getElapsedTime();
+    
+    particles.forEach((particle, i) => {
+      particle.y -= particle.speed;
+      if (particle.y < 0) particle.y = 40;
+      
+      if (type === 'snow') {
+        particle.x = particle.initialX + Math.sin(time + particle.y * 0.5) * 0.5;
+      }
+      
+      dummy.position.set(particle.x, particle.y, particle.z);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  if (type === 'clear') return null;
+
+  return (
+    <instancedMesh ref={meshRef} args={[null, null, count]}>
+      {type === 'rain' ? (
+        <boxGeometry args={[0.04, 0.8, 0.04]} /> // Scaled up to compensate for fewer particles
+      ) : (
+        <sphereGeometry args={[0.15, 4, 4]} />
+      )}
+      <meshBasicMaterial color={type === 'rain' ? '#93c5fd' : '#ffffff'} transparent opacity={type === 'rain' ? 0.4 : 0.8} depthWrite={false} />
+    </instancedMesh>
+  );
+};
+
+const CameraController = ({ interiorTarget, orbitControlsRef }) => {
+  const { camera } = useThree();
+  
+  useFrame(() => {
+    if (interiorTarget && orbitControlsRef.current) {
+      orbitControlsRef.current.enabled = false;
+      
+      // Calculate position just outside the balcony looking in
+      const offset = 4.5;
+      const targetCamPos = new THREE.Vector3(
+        interiorTarget.pos[0] + (interiorTarget.facing === 'East' ? offset : interiorTarget.facing === 'West' ? -offset : 0),
+        interiorTarget.pos[1] + 1.2,
+        interiorTarget.pos[2] + (interiorTarget.facing === 'North' ? -offset : interiorTarget.facing === 'South' ? offset : 0)
+      );
+      
+      const targetLookAt = new THREE.Vector3(
+        interiorTarget.pos[0],
+        interiorTarget.pos[1] + 1.0,
+        interiorTarget.pos[2]
+      );
+
+      camera.position.lerp(targetCamPos, 0.08);
+      orbitControlsRef.current.target.lerp(targetLookAt, 0.08);
+    } else if (orbitControlsRef.current) {
+      orbitControlsRef.current.enabled = true;
+    }
+  });
+
+  return null;
+};
+
+const FlatSegment = React.memo(({ position, facing, floor, isSelected, onSelect, onDoubleClick, width = 1.8, predictedPrice }) => {
   const [hovered, setHovered] = useState(false);
+  const halfWidth = width / 2;
+  const isTarget = isSelected || hovered;
 
-  let mainColor = '#475569'; // Slate 600 (Darker building walls)
-  let accentColor = '#0f172a'; // Slate 900
-  let glassColor = '#e0f2fe'; 
-
-  if (isSelected) {
-    mainColor = '#064e3b'; // Emerald 900 (Darker selection color)
-    accentColor = '#022c22';
-    glassColor = '#34d399';
-  } else if (hovered) {
-    mainColor = '#047857'; // Emerald 700 (Darker hover color)
-    accentColor = '#064e3b';
-  }
+  const mainMat = isSelected ? sharedMaterials.flatMainSel : (hovered ? sharedMaterials.flatMainHov : sharedMaterials.flatMainDef);
+  const glassMat = isTarget ? sharedMaterials.flatGlassSel : sharedMaterials.flatGlassDef;
 
   let rotY = 0;
   if (facing === 'East') rotY = Math.PI / 2;
   if (facing === 'West') rotY = -Math.PI / 2;
   if (facing === 'North') rotY = Math.PI;
 
-  const halfWidth = width / 2;
-
   return (
     <group position={position} rotation={[0, rotY, 0]}>
-      {/* Main Room Structure (Hollow for interior view) */}
-      <group
-        onClick={(e) => { e.stopPropagation(); onSelect(); }} 
+      {/* INVISIBLE HITBOX FOR O(1) RAYCASTING */}
+      <mesh 
+        position={[0, 0.05, 0]} 
+        scale={[width, 1.4, 2.8]} 
+        geometry={sharedGeometries.box} 
+        material={sharedMaterials.hitbox}
+        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        onDoubleClick={(e) => { e.stopPropagation(); if (onDoubleClick) onDoubleClick(position, facing); }}
         onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }} 
         onPointerOut={() => setHovered(false)}
-      >
+      />
+
+      {/* 3D Price Tag Overlay */}
+      {isSelected && predictedPrice && (
+        <Html position={[0, 0.6, 1.5]} center zIndexRange={[100, 0]} className="pointer-events-none">
+          <div className="flex flex-col items-center animate-in zoom-in duration-300">
+            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-xl border border-emerald-400 text-center whitespace-nowrap">
+              <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Est. Value</div>
+              <div className="text-xl font-black text-slate-800 tracking-tight">₹{predictedPrice} <span className="text-sm text-slate-500">L</span></div>
+            </div>
+            <div className="w-2 h-2 bg-emerald-400 rotate-45 -mt-1 border-b border-r border-emerald-400 shadow-sm"></div>
+          </div>
+        </Html>
+      )}
+
+      {/* Main Room Structure */}
+      <group>
         {/* Back Wall */}
-        <mesh position={[0, 0, -0.55]}>
-          <boxGeometry args={[width - 0.2, 0.9, 0.1]} />
-          <meshStandardMaterial color={mainColor} roughness={0.5} />
-        </mesh>
+        <mesh position={[0, 0, -0.55]} scale={[width - 0.2, 0.9, 0.1]} geometry={sharedGeometries.box} material={mainMat} />
         {/* Floor */}
-        <mesh position={[0, -0.4, 0]}>
-          <boxGeometry args={[width - 0.2, 0.1, 1.0]} />
-          <meshStandardMaterial color="#cbd5e1" roughness={0.8} />
-        </mesh>
+        <mesh position={[0, -0.4, 0]} scale={[width - 0.2, 0.1, 1.0]} geometry={sharedGeometries.box} material={sharedMaterials.flatFloor} />
         {/* Ceiling */}
-        <mesh position={[0, 0.4, 0]}>
-          <boxGeometry args={[width - 0.2, 0.1, 1.0]} />
-          <meshStandardMaterial color="#f8fafc" roughness={0.9} />
-        </mesh>
+        <mesh position={[0, 0.4, 0]} scale={[width - 0.2, 0.1, 1.0]} geometry={sharedGeometries.box} material={sharedMaterials.flatCeil} />
         {/* Left Wall */}
-        <mesh position={[-halfWidth + 0.05, 0, 0]}>
-          <boxGeometry args={[0.1, 0.9, 1.0]} />
-          <meshStandardMaterial color={mainColor} roughness={0.5} />
-        </mesh>
+        <mesh position={[-halfWidth + 0.05, 0, 0]} scale={[0.1, 0.9, 1.0]} geometry={sharedGeometries.box} material={mainMat} />
         {/* Right Wall */}
-        <mesh position={[halfWidth - 0.05, 0, 0]}>
-          <boxGeometry args={[0.1, 0.9, 1.0]} />
-          <meshStandardMaterial color={mainColor} roughness={0.5} />
-        </mesh>
-        {/* Interior removed for performance */}
+        <mesh position={[halfWidth - 0.05, 0, 0]} scale={[0.1, 0.9, 1.0]} geometry={sharedGeometries.box} material={mainMat} />
       </group>
 
       {/* Balcony Base */}
-      <mesh position={[0, -0.4, 0.9]} receiveShadow castShadow>
-        <boxGeometry args={[width, 0.1, 0.6]} />
-        <meshStandardMaterial color={mainColor} roughness={0.8} />
-      </mesh>
+      <mesh position={[0, -0.4, 0.9]} scale={[width, 0.1, 0.6]} geometry={sharedGeometries.box} material={mainMat} receiveShadow castShadow />
 
-      {/* Premium White Trim (Makes floor separation clearly visible) */}
-      <mesh position={[0, -0.4, 1.22]} receiveShadow castShadow>
-        <boxGeometry args={[width + 0.02, 0.12, 0.05]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.2} metalness={0.1} />
-      </mesh>
+      {/* Premium White Trim */}
+      <mesh position={[0, -0.4, 1.22]} scale={[width + 0.02, 0.12, 0.05]} geometry={sharedGeometries.box} material={sharedMaterials.flatTrim} receiveShadow castShadow />
 
-      {/* Advanced Glass Railings (Optimized for Smooth FPS) */}
-      <mesh position={[0, -0.15, 1.21]}>
-        <planeGeometry args={[width, 0.5]} />
-        <meshBasicMaterial color={glassColor} transparent opacity={0.4} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[-halfWidth - 0.01, -0.15, 0.9]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[0.6, 0.5]} />
-        <meshBasicMaterial color={glassColor} transparent opacity={0.4} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[halfWidth + 0.01, -0.15, 0.9]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[0.6, 0.5]} />
-        <meshBasicMaterial color={glassColor} transparent opacity={0.4} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Glass Railings */}
+      <mesh position={[0, -0.15, 1.21]} scale={[width, 0.5, 1]} geometry={sharedGeometries.plane} material={glassMat} />
+      <mesh position={[-halfWidth - 0.01, -0.15, 0.9]} rotation={[0, Math.PI / 2, 0]} scale={[0.6, 0.5, 1]} geometry={sharedGeometries.plane} material={glassMat} />
+      <mesh position={[halfWidth + 0.01, -0.15, 0.9]} rotation={[0, Math.PI / 2, 0]} scale={[0.6, 0.5, 1]} geometry={sharedGeometries.plane} material={glassMat} />
 
-      {/* Upgraded Transparent Sliding Door */}
+      {/* Transparent Sliding Door */}
       <group position={[0, 0.05, 0.62]}>
-        {/* Left Frame */}
-        <mesh position={[-width * 0.3 + 0.025, 0, 0]}>
-          <boxGeometry args={[0.05, 0.7, 0.05]} />
-          <meshStandardMaterial color="#0f172a" />
-        </mesh>
-        {/* Right Frame */}
-        <mesh position={[width * 0.3 - 0.025, 0, 0]}>
-          <boxGeometry args={[0.05, 0.7, 0.05]} />
-          <meshStandardMaterial color="#0f172a" />
-        </mesh>
-        {/* Top Frame */}
-        <mesh position={[0, 0.35 - 0.025, 0]}>
-          <boxGeometry args={[width * 0.6, 0.05, 0.05]} />
-          <meshStandardMaterial color="#0f172a" />
-        </mesh>
-        {/* Glass Window Pane */}
-        <mesh position={[0, 0, 0]}>
-          <planeGeometry args={[width * 0.6, 0.7]} />
-          <meshBasicMaterial color="#bae6fd" transparent opacity={0.3} side={THREE.DoubleSide} />
-        </mesh>
+        <mesh position={[-width * 0.3 + 0.025, 0, 0]} scale={[0.05, 0.7, 0.05]} geometry={sharedGeometries.box} material={sharedMaterials.doorFrame} />
+        <mesh position={[width * 0.3 - 0.025, 0, 0]} scale={[0.05, 0.7, 0.05]} geometry={sharedGeometries.box} material={sharedMaterials.doorFrame} />
+        <mesh position={[0, 0.35 - 0.025, 0]} scale={[width * 0.6, 0.05, 0.05]} geometry={sharedGeometries.box} material={sharedMaterials.doorFrame} />
+        <mesh position={[0, 0, 0]} scale={[width * 0.6, 0.7, 1]} geometry={sharedGeometries.plane} material={sharedMaterials.doorGlass} />
       </group>
     </group>
   );
-};
+}, (prev, next) => {
+  return prev.isSelected === next.isSelected && 
+         prev.predictedPrice === next.predictedPrice &&
+         prev.hovered === next.hovered; 
+});
 
-const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
+export const Building = React.memo(({ formData = {}, onSelectFlat = () => {}, onDoubleClickFlat = () => {}, predictedPrice = null, numFloors = 14 }) => {
   const [selectedSubId, setSelectedSubId] = useState(null);
 
   const handleSelect = (floor, facing, subId) => {
     setSelectedSubId(subId);
-    onSelectFlat(floor, facing);
+    onSelectFlat(floor, facing, subId);
   };
 
   const floors = [];
@@ -315,6 +364,8 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
           isSelected={isSelected} 
           width={face.width}
           onSelect={() => handleSelect(i, face.name, face.subId)} 
+          onDoubleClick={(pos, facing) => onDoubleClickFlat({pos, facing, floor: i})}
+          predictedPrice={isSelected ? predictedPrice : null}
         />
       );
     });
@@ -729,41 +780,41 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
       <VisitorHumanoid initialPosition={[-10.5, 0.13, 2]} offset={6} isLeaving={true} />
 
       {/* Commercial Stores across the street */}
-      <Store position={[-19.5, 0, 8]} color="#fcd34d" rotY={Math.PI / 2} />
-      <Store position={[-19.5, 0, -2]} color="#f472b6" rotY={Math.PI / 2} />
-      <Store position={[-19.5, 0, -12]} color="#2dd4bf" rotY={Math.PI / 2} />
+      <Store position={[-20.5, 0, 8]} color="#fcd34d" rotY={Math.PI / 2} />
+      <Store position={[-20.5, 0, -2]} color="#f472b6" rotY={Math.PI / 2} />
+      <Store position={[-20.5, 0, -12]} color="#2dd4bf" rotY={Math.PI / 2} />
       
       {/* Expanded Park (East) */}
-      <mesh position={[12, 0, 0]}>
+      <mesh position={[14.6, 0, 0]}>
         <boxGeometry args={[10, 0.1, 24]} />
         <meshStandardMaterial color="#22c55e" roughness={0.9} />
       </mesh>
       {/* Park Pond */}
-      <mesh position={[12, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[14.6, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[3.5, 3.5, 0.05, 32]} />
         <meshStandardMaterial color="#0ea5e9" transparent opacity={0.8} />
       </mesh>
       {/* Park Benches */}
-      <mesh position={[8, 0.2, 0]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh position={[11, 0.2, 0]} rotation={[0, Math.PI / 2, 0]}>
         <boxGeometry args={[1, 0.2, 0.4]} />
         <meshStandardMaterial color="#78350f" />
       </mesh>
-      <mesh position={[16, 0.2, 0]} rotation={[0, -Math.PI / 2, 0]}>
+      <mesh position={[18, 0.2, 0]} rotation={[0, -Math.PI / 2, 0]}>
         <boxGeometry args={[1, 0.2, 0.4]} />
         <meshStandardMaterial color="#78350f" />
       </mesh>
-      <mesh position={[12, 0.2, 4]} rotation={[0, 0, 0]}>
+      <mesh position={[14.6, 0.2, 4]} rotation={[0, 0, 0]}>
         <boxGeometry args={[1, 0.2, 0.4]} />
         <meshStandardMaterial color="#78350f" />
       </mesh>
       {/* More Park Trees */}
-      <Tree position={[10, 0.1, 5]} scale={1.2} />
-      <Tree position={[14, 0.1, 6]} scale={1.5} />
-      <Tree position={[11, 0.1, -6]} scale={1.1} />
-      <Tree position={[13, 0.1, -4]} scale={0.9} />
-      <Tree position={[15, 0.1, -8]} scale={1.3} />
-      <Tree position={[9, 0.1, -9]} scale={1.4} />
-      <Tree position={[16, 0.1, 9]} scale={1.2} />
+      <Tree position={[12.6, 0.1, 5]} scale={1.2} />
+      <Tree position={[16.6, 0.1, 6]} scale={1.5} />
+      <Tree position={[13.6, 0.1, -6]} scale={1.1} />
+      <Tree position={[15.6, 0.1, -4]} scale={0.9} />
+      <Tree position={[17.6, 0.1, -8]} scale={1.3} />
+      <Tree position={[11.6, 0.1, -9]} scale={1.4} />
+      <Tree position={[18.6, 0.1, 9]} scale={1.2} />
     </group>
   );
 
@@ -819,44 +870,153 @@ const Building = ({ formData, onSelectFlat, numFloors = 14 }) => {
       })}
     </group>
   );
-};
+}, (prev, next) => {
+  return prev.formData.floor === next.formData.floor && 
+         prev.formData.facing === next.formData.facing && 
+         prev.predictedPrice === next.predictedPrice;
+});
 
-export default React.memo(function Building3D({ formData, onSelectFlat }) {
+export default React.memo(function Building3D({ formData, onSelectFlat, predictedPrice }) {
+  const [theme, setTheme] = useState('day');
+  const [weather, setWeather] = useState('clear'); // clear, rain, snow
+  const [interiorTarget, setInteriorTarget] = useState(null);
+  const orbitControlsRef = useRef(null);
+  
+  const isNight = theme === 'night';
+
+  useEffect(() => {
+    if (isNight) {
+      // Light up the interior (seen through the sliding door glass)
+      sharedMaterials.doorGlass.color.set('#fef08a');
+      sharedMaterials.doorGlass.opacity = 0.9;
+      
+      // Ensure outer glass doesn't glow strangely
+      sharedMaterials.flatGlassDef.color.set('#0f172a'); 
+      sharedMaterials.flatGlassDef.opacity = 0.4;
+      sharedMaterials.flatGlassSel.color.set('#fde047');
+      sharedMaterials.flatGlassSel.opacity = 0.5;
+    } else {
+      sharedMaterials.doorGlass.color.set('#bae6fd');
+      sharedMaterials.doorGlass.opacity = 0.3;
+
+      sharedMaterials.flatGlassDef.color.set('#e0f2fe'); 
+      sharedMaterials.flatGlassDef.opacity = 0.4;
+      sharedMaterials.flatGlassSel.color.set('#34d399'); 
+      sharedMaterials.flatGlassSel.opacity = 0.4;
+    }
+  }, [isNight]);
+
+  useEffect(() => {
+    if (weather === 'rain') {
+      startRainSound();
+    } else {
+      stopRainSound();
+    }
+    // Cleanup on unmount
+    return () => stopRainSound();
+  }, [weather]);
+
+  const handleSelectFlat = React.useCallback((floor, facing, subId) => {
+    playClickSound();
+    if (onSelectFlat) onSelectFlat(floor, facing, subId);
+  }, [onSelectFlat]);
+
+  const handleDoubleClickFlat = React.useCallback((pos, facing) => {
+    playWhooshSound();
+    setInteriorTarget({ pos, facing });
+  }, []);
+
   return (
-    <div className="w-full h-[50vh] min-h-[350px] lg:h-full lg:min-h-[500px] bg-gradient-to-t from-slate-300 to-sky-100 rounded-2xl overflow-hidden border border-slate-200 relative group cursor-grab active:cursor-grabbing shadow-inner">
-      <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-slate-700 pointer-events-none transition-opacity group-hover:opacity-100 opacity-70">
+    <div className={`w-full h-[50vh] min-h-[350px] lg:h-full lg:min-h-[500px] rounded-2xl overflow-hidden border relative group cursor-grab active:cursor-grabbing shadow-inner transition-colors duration-1000 ${isNight ? 'bg-gradient-to-t from-slate-900 to-indigo-950 border-slate-800' : 'bg-gradient-to-t from-slate-300 to-sky-100 border-slate-200'}`}>
+      <div className={`absolute top-4 left-4 z-10 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm text-sm font-bold pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-70 ${isNight ? 'bg-slate-900/80 text-slate-300' : 'bg-white/90 text-slate-700'}`}>
         Select Floor & Facing (Rotate & Click)
       </div>
+      
+      {/* Day/Night Toggle Button */}
+      <button 
+        onClick={(e) => { e.stopPropagation(); playClickSound(); setTheme(isNight ? 'day' : 'night'); }}
+        className={`absolute top-4 right-4 z-10 backdrop-blur-md p-2 rounded-xl shadow-md transition-all duration-300 hover:scale-110 flex items-center justify-center ${isNight ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40 border border-indigo-500/30' : 'bg-amber-100 text-amber-600 hover:bg-amber-200 border border-amber-200'}`}
+        title={`Switch to ${isNight ? 'Day' : 'Night'} Mode`}
+      >
+        {isNight ? (
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        )}
+      </button>
+
+      {/* Weather Toggle Button */}
+      <button 
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          playClickSound();
+          setWeather(w => w === 'clear' ? 'rain' : w === 'rain' ? 'snow' : 'clear'); 
+        }}
+        className={`absolute top-16 right-4 z-10 backdrop-blur-md p-2 rounded-xl shadow-md transition-all duration-300 hover:scale-110 flex items-center justify-center bg-white/80 text-sky-600 border border-sky-200`}
+        title={`Current Weather: ${weather}. Click to change.`}
+      >
+        {weather === 'clear' ? (
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+        ) : weather === 'rain' ? (
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m20 17.5-6-3.5"/><path d="m4 6.5 6 3.5"/><path d="m4 17.5 6-3.5"/><path d="m20 6.5-6 3.5"/><path d="M12 22v-7"/><path d="M12 2v7"/></svg>
+        )}
+      </button>
+
+      {/* Reset Camera Button for Fly-Through */}
+      {interiorTarget && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); playWhooshSound(); setInteriorTarget(null); }}
+          className="absolute bottom-4 right-4 z-10 bg-rose-500/90 text-white px-4 py-2 rounded-xl shadow-lg font-bold hover:bg-rose-600 hover:scale-105 transition-all flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9h6v-6"/><path d="M21 15h-6v6"/><path d="M21 3l-9 9"/><path d="M3 21l9-9"/></svg>
+          Reset Camera
+        </button>
+      )}
+
       <Canvas dpr={1} camera={{ position: [40, 30, 50], fov: 45 }} performance={{ min: 0.5, max: 1 }} frameloop="always">
         <React.Suspense fallback={null}>
           <Environment resolution={128} background={false}>
             <mesh>
               <sphereGeometry args={[100, 16, 16]} />
-              <meshBasicMaterial color="#e0f2fe" side={THREE.BackSide} />
+              <meshBasicMaterial color={isNight ? "#020617" : "#e0f2fe"} side={THREE.BackSide} />
             </mesh>
           </Environment>
-          {/* Dramatic Lighting & Global Atmosphere */}
-          <ambientLight intensity={0.6} />
-          <directionalLight 
-            position={[15, 25, 20]} 
-            intensity={2.5} 
-            color="#fffbeb"
-          />
-          <directionalLight position={[-15, 10, -20]} intensity={1.5} color="#38bdf8" />
-          <hemisphereLight skyColor="#bae6fd" groundColor="#64748b" intensity={0.8} />
           
-          <Building formData={formData} onSelectFlat={onSelectFlat} numFloors={14} />
+          {/* Dynamic Lighting based on Theme */}
+          {isNight ? (
+            <>
+              <ambientLight intensity={0.2} />
+              <directionalLight position={[15, 25, 20]} intensity={0.5} color="#818cf8" />
+              <directionalLight position={[-15, 10, -20]} intensity={0.3} color="#4f46e5" />
+              <hemisphereLight skyColor="#0f172a" groundColor="#1e293b" intensity={0.4} />
+              {/* Moon Glow */}
+              <pointLight position={[20, 40, 30]} intensity={1.5} color="#c7d2fe" distance={100} decay={2} />
+            </>
+          ) : (
+            <>
+              <ambientLight intensity={0.6} />
+              <directionalLight position={[15, 25, 20]} intensity={2.5} color="#fffbeb" />
+              <directionalLight position={[-15, 10, -20]} intensity={1.5} color="#38bdf8" />
+              <hemisphereLight skyColor="#bae6fd" groundColor="#64748b" intensity={0.8} />
+            </>
+          )}
+          <WeatherSystem type={weather} />
+          <CameraController interiorTarget={interiorTarget} orbitControlsRef={orbitControlsRef} />
+          
+          <Building formData={formData} onSelectFlat={handleSelectFlat} onDoubleClickFlat={handleDoubleClickFlat} predictedPrice={predictedPrice} numFloors={14} />
           
           <OrbitControls 
+            ref={orbitControlsRef}
             enablePan={false} 
             target={[0, 8, 0]}
             minPolarAngle={Math.PI / 8} 
             maxPolarAngle={Math.PI / 2 + 0.1} 
             minDistance={25}
             maxDistance={120}
-            autoRotate
-            autoRotateSpeed={0.4}
-            enableDamping={true}
+            autoRotate={!interiorTarget}
+            autoRotateSpeed={0.5}
             dampingFactor={0.05}
           />
           <Preload all />

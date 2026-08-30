@@ -2,7 +2,7 @@ import React from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { supabase } from '../services/supabase';
 import { Helmet } from 'react-helmet-async';
-import { History, Trash2, Calendar, MapPin, Square, BedDouble, AlertCircle, Loader2 } from 'lucide-react';
+import { History, Trash2, Calendar, MapPin, Square, BedDouble, AlertCircle, Loader2, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -76,6 +76,16 @@ export default function HistoryPage() {
     deleteMutation.mutate(id);
   };
 
+  const handleShare = (item) => {
+    const text = `I just valued a ${item.bedrooms} BHK flat on Floor ${item.floor} facing ${item.facing} at ₹${item.predicted_price_lakh} Lakhs using AI! Check out FlatPrice.`;
+    if (navigator.share) {
+      navigator.share({ title: 'FlatPrice AI', text })
+        .catch(console.error);
+    } else {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
+    }
+  };
+
   if (!isLoaded) {
     return (
       <div className="flex justify-center min-h-[50vh] items-center">
@@ -126,7 +136,21 @@ export default function HistoryPage() {
               key={item.id}
               className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-[2rem] p-6 shadow-lg hover:bg-white/80 transition-all hover:-translate-y-1 relative overflow-hidden group"
             >
-              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Background Layout Image */}
+              <div 
+                className="absolute inset-0 z-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500 bg-center bg-no-repeat bg-contain"
+                style={{ backgroundImage: `url(/floor_plan_${item.bedrooms}bhk.jpg)`, backgroundPosition: 'right bottom', backgroundSize: '70%' }}
+              />
+
+              <div className="relative z-10">
+                <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                  <button 
+                  onClick={() => handleShare(item)}
+                  className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-2xl transition-colors shadow-sm"
+                  title="Share record"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
                 <button 
                   onClick={() => deletePrediction(item.id)}
                   className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-2xl transition-colors shadow-sm"
@@ -175,6 +199,7 @@ export default function HistoryPage() {
                   </div>
                   <span className="font-bold text-slate-600">Floor {item.floor}</span>
                 </div>
+              </div>
               </div>
             </motion.div>
           ))}

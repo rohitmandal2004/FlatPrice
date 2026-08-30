@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { ArrowRight, BrainCircuit, BarChart3, ShieldCheck, Database, Cog, LineChart, FileOutput, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Hero3D from '../components/Hero3D';
 
 export default function LandingPage() {
   const containerVariants = {
@@ -22,12 +23,8 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col items-center relative overflow-hidden bg-background">
-      {/* Premium Decorative Background Blobs */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-[800px] opacity-60 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-primary/30 rounded-full mix-blend-multiply filter blur-[100px] animate-blob"></div>
-        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-emerald-400/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-2000"></div>
-        <div className="absolute top-[20%] left-[30%] w-[500px] h-[500px] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-4000"></div>
-      </div>
+      {/* 3D Background */}
+      <Hero3D />
 
       {/* Hero Section */}
       <section className="w-full py-20 md:py-32 lg:py-40 flex flex-col items-center text-center relative z-10">

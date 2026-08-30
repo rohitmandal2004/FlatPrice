@@ -5,12 +5,9 @@ import { Loader2, Download, History, Trash2, Database, IndianRupee, Activity, Tr
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../hooks/useStore';
 import { useDeferredMount } from '../hooks/useDeferredMount';
-import HistoryPage from './HistoryPage';
-
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState('overview');
   const [activeDistribution, setActiveDistribution] = useState('facing');
   const [coeffView, setCoeffView] = useState('absolute');
   const history = useStore(state => state.history);
@@ -102,27 +99,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      <div className="flex bg-white/50 backdrop-blur-xl border border-white/60 p-1.5 rounded-2xl w-full max-w-sm shadow-sm">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'overview' ? 'bg-white shadow-md text-primary' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-          Model Overview
-        </button>
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'history' ? 'bg-white shadow-md text-primary' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-          My History
-        </button>
-      </div>
-
-      {activeTab === 'history' ? (
-        <div className="mt-8">
-          <HistoryPage />
-        </div>
-      ) : (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {/* KPI Cards */}
             <div className="group rounded-[2rem] border border-white/60 bg-white/60 backdrop-blur-xl shadow-lg p-6 hover:bg-white/80 transition-all hover:-translate-y-1">
@@ -336,9 +313,77 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+
+            {/* Price Heatmap (Full width) */}
+            <div className="rounded-[2rem] border border-white/60 bg-white/60 backdrop-blur-xl shadow-lg p-6 sm:p-8 space-y-6 md:col-span-2 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-rose-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none z-0"></div>
+
+              <div className="relative z-10 space-y-2">
+                <h3 className="font-black text-2xl text-slate-800 flex items-center gap-2">
+                  <div className="w-2 h-8 bg-rose-500 rounded-full"></div>
+                  Price Heatmap: Floor vs Facing
+                </h3>
+                <p className="text-slate-500 font-medium pl-4">Discover valuation hot spots based on flat configuration (Average price in Lakhs).</p>
+              </div>
+
+              <div className="w-full overflow-x-auto relative z-10 py-4">
+                <div className="min-w-[600px]">
+                  {/* Grid Headers */}
+                  <div className="flex mb-2">
+                    <div className="w-20"></div> {/* Empty corner */}
+                    {['North', 'South', 'East', 'West'].map(facing => (
+                      <div key={facing} className="flex-1 text-center font-bold text-slate-600 uppercase tracking-widest text-sm">
+                        {facing}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Grid Rows (Floors) */}
+                  {Array.from(new Set(stats.heatmap_data?.map(d => d.floor) || [])).sort((a,b) => b-a).map(floor => (
+                    <div key={floor} className="flex mb-2 items-center group">
+                      <div className="w-20 text-right pr-4 font-bold text-slate-600">
+                        Floor {floor}
+                      </div>
+                      {['North', 'South', 'East', 'West'].map(facing => {
+                        const cellData = stats.heatmap_data?.find(d => d.floor === floor && d.facing === facing);
+                        const price = cellData ? cellData.price : 0;
+                        const min = stats.min_price;
+                        const max = stats.max_price;
+                        
+                        // Calculate color intensity (0 to 1)
+                        let intensity = 0;
+                        if (price > 0 && max > min) {
+                          intensity = (price - min) / (max - min);
+                        }
+
+                        // Background color interpolation (Slate-50 to Rose-500)
+                        const bgColor = price > 0 
+                          ? `rgba(244, 63, 94, ${0.1 + intensity * 0.9})` // Rose 500 with varying opacity
+                          : '#f8fafc'; // Empty slate
+
+                        const textColor = intensity > 0.5 ? 'text-white drop-shadow-md' : 'text-slate-700';
+
+                        return (
+                          <div 
+                            key={`${floor}-${facing}`} 
+                            className="flex-1 h-12 m-1 rounded-xl flex items-center justify-center font-black transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-default border border-black/5"
+                            style={{ backgroundColor: bgColor }}
+                          >
+                            {price > 0 ? (
+                              <span className={textColor}>₹{price.toFixed(1)}L</span>
+                            ) : (
+                              <span className="text-slate-300 text-xs">-</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      )}
     </div>
   );
 }

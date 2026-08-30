@@ -17,6 +17,7 @@ export default function MainLayout() {
     { name: 'Home', href: '/', icon: Home },
     { name: 'Predict Price', href: '/predict', icon: Calculator },
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+    { name: 'History', href: '/history', icon: History },
     { name: 'How It Works', href: '/explore', icon: BookOpen },
   ];
 

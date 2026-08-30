@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { predictPrice } from '../services/api';
+import { predictPrice, getDatasetStats } from '../services/api';
 import { supabase } from '../services/supabase';
-import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info, IndianRupee, PieChart, LineChart as LineChartIcon, View, ZoomIn, ZoomOut, X, Maximize2 } from 'lucide-react';
+import { Calculator, AlertCircle, Loader2, Copy, Download, TrendingUp, TrendingDown, Info, IndianRupee, PieChart, LineChart as LineChartIcon, View, ZoomIn, ZoomOut, X, Maximize2, Share2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
@@ -17,6 +17,28 @@ import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import Building3D from '../components/Building3D';
 import Logo from '../components/Logo';
+import ValuationCertificate from '../components/ValuationCertificate';
+
+const AnimatedCounter = ({ value, duration = 2 }) => {
+  const [count, setCount] = useState(0);
+  
+  React.useEffect(() => {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
+      // ease-out expo
+      const easeOut = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setCount(value * easeOut);
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      }
+    };
+    window.requestAnimationFrame(step);
+  }, [value, duration]);
+  
+  return <>{count.toFixed(2)}</>;
+};
 
 const formSchema = z.object({
   area_sqft: z.coerce.number().min(200, "Area must be at least 200 sqft").max(15000, "Unrealistic area (Max 15000)"),
@@ -83,9 +105,17 @@ export default function PredictionPage() {
   const loading = mutation.isPending;
   const result = mutation.data;
 
-  const handleSelectFlat = (floor, facing) => {
+  const handleSelectFlat = (floor, facing, subId) => {
     setValue('floor', floor, { shouldValidate: true });
     setValue('facing', facing, { shouldValidate: true });
+    
+    // Auto-predict for 3D overlay
+    const currentData = watch();
+    mutation.mutate({
+      ...currentData,
+      floor,
+      facing
+    });
   };
 
   const onSubmit = (data) => {
@@ -100,20 +130,31 @@ export default function PredictionPage() {
   };
 
   const handlePrint = async () => {
-    const element = document.getElementById('prediction-report');
+    const element = document.getElementById('valuation-certificate');
     if (!element) return;
-    const toastId = toast.loading("Generating PDF Report...");
     
-    const originalClasses = element.className;
-    element.classList.remove('backdrop-blur-2xl', 'bg-white/90', 'border-white', 'shadow-xl');
-    element.classList.add('bg-white', 'border-slate-200');
+    const toastId = toast.loading("Generating Official Certificate...");
     
     try {
+      // Temporarily bring the element into the viewport but behind everything
+      element.classList.remove('-left-[9999px]');
+      element.classList.add('left-0', 'top-0', '-z-50');
+
+      // Ensure fonts are loaded before capturing
+      await document.fonts.ready;
+      
+      // Give the browser a moment to render the element on screen
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       const dataUrl = await toPng(element, { 
         quality: 1, 
         pixelRatio: 2,
         backgroundColor: '#ffffff'
       });
+      
+      // Restore classes immediately
+      element.classList.add('-left-[9999px]');
+      element.classList.remove('left-0', 'top-0', '-z-50');
       
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -125,14 +166,22 @@ export default function PredictionPage() {
       const pdfHeight = (element.offsetHeight * pdfWidth) / element.offsetWidth;
       
       pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save('FlatPredict_Report.pdf');
+      pdf.save(`Valuation_Certificate_${result?.id || 'New'}.pdf`);
       
-      toast.success("PDF downloaded successfully!", { id: toastId });
+      toast.success("Certificate generated successfully!", { id: toastId });
     } catch (err) {
-      toast.error(`Failed to generate PDF`, { id: toastId });
+      toast.error(`Failed to generate Certificate`, { id: toastId });
       console.error(err);
-    } finally {
-      element.className = originalClasses;
+    }
+  };
+
+  const handleShare = (res) => {
+    const text = `I just valued a ${formData.bedrooms} BHK flat on Floor ${formData.floor} facing ${formData.facing} at ₹${res.predicted_price_lakh} Lakhs using AI! Check out FlatPrice.`;
+    if (navigator.share) {
+      navigator.share({ title: 'FlatPrice AI', text })
+        .catch(console.error);
+    } else {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
     }
   };
 
@@ -284,7 +333,7 @@ export default function PredictionPage() {
           </motion.div>
 
           <motion.div className="lg:col-span-7 flex flex-col h-full min-h-[500px]">
-            <Building3D formData={formData} onSelectFlat={handleSelectFlat} />
+            <Building3D formData={formData} onSelectFlat={handleSelectFlat} predictedPrice={result?.predicted_price_lakh} />
           </motion.div>
         </div>
 
@@ -329,6 +378,9 @@ export default function PredictionPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      <button onClick={() => handleShare(result)} className="p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors" title="Share Prediction">
+                        <Share2 className="w-4 h-4 text-slate-600" />
+                      </button>
                       <button onClick={handleCopy} className="p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors">
                         <Copy className="w-4 h-4 text-slate-600" />
                       </button>
@@ -351,7 +403,7 @@ export default function PredictionPage() {
                 <div className="text-center space-y-3">
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated Property Value</div>
                   <div className="text-5xl sm:text-6xl font-black text-slate-800 leading-tight bg-clip-text text-transparent bg-gradient-to-br from-slate-800 to-slate-600">
-                    ₹{result.predicted_price_lakh} <span className="text-2xl text-slate-400 font-bold">Lakh</span>
+                    ₹<AnimatedCounter value={result.predicted_price_lakh} /> <span className="text-2xl text-slate-400 font-bold">Lakh</span>
                   </div>
                   <div className="flex justify-center mt-1">
                     <div className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-100">
@@ -363,12 +415,12 @@ export default function PredictionPage() {
 
                 {/* Premium Price Breakdown */}
                 <div className="mt-8 pt-8 pb-6 border-t border-slate-100/60 max-w-3xl mx-auto w-full relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-transparent to-blue-50/50 rounded-3xl -z-10 blur-xl"></div>
+                  <div className="absolute inset-0 opacity-10 flex items-center justify-center -z-10 bg-no-repeat bg-contain bg-center mix-blend-multiply pointer-events-none" style={{ backgroundImage: `url(/floor_plan_${Math.min(formData.bedrooms, 5)}bhk.jpg)` }}></div>
                   <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 px-2">
                     <div className="p-1.5 bg-emerald-100/80 rounded-md text-emerald-600 shadow-sm border border-emerald-200/50">
                       <PieChart className="w-4 h-4" />
                     </div>
-                    Value Breakdown
+                    "Why this Price?" ML Breakdown
                   </h3>
                   <div className="bg-white/40 backdrop-blur-md border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-10">
                     <div className="w-56 h-56 flex-shrink-0 relative">
@@ -677,7 +729,7 @@ export default function PredictionPage() {
           <div className="flex-1 w-full h-full relative flex items-center justify-center p-4 overflow-auto">
             <div className="min-w-full min-h-full flex items-center justify-center">
               <img 
-                src={`/floor_plan_${formData.bedrooms}bhk.jpg`} 
+                src={`/floor_plan_${Math.min(formData.bedrooms, 5)}bhk.jpg`} 
                 alt={`${formData.bedrooms} BHK Floor Plan`} 
                 className="max-w-none transition-transform duration-200"
                 style={{ transform: `scale(${zoomScale})`, transformOrigin: 'center center' }}
@@ -686,6 +738,9 @@ export default function PredictionPage() {
           </div>
         </div>
       )}
+      
+      {/* Hidden Certificate for PDF Generation */}
+      <ValuationCertificate formData={formData} result={result} certificateId={result?.id} />
     </div>
   );
 }

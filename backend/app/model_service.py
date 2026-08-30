@@ -64,11 +64,13 @@ class ModelService:
             req.area_sqft, req.facing, req.floor, req.car_parking_sqft, req.bedrooms
         )
 
+    @lru_cache(maxsize=1)
     def get_model_info(self) -> ModelInfoResponse:
         if not self.is_loaded():
             raise Exception("Model not loaded")
         return ModelInfoResponse(**self.metadata)
 
+    @lru_cache(maxsize=1)
     def get_dataset_stats(self) -> DatasetStatsResponse:
         if self.dataset is None:
             raise Exception("Dataset not loaded")
@@ -86,6 +88,17 @@ class ModelService:
             for _, row in scatter_sample.iterrows()
         ]
 
+        # Heatmap data: average price by Floor and Facing
+        heatmap_raw = df.groupby(['Floor', 'Facing'])['Price_Lakh'].mean().reset_index()
+        heatmap_data = [
+            {
+                "floor": int(row['Floor']),
+                "facing": row['Facing'],
+                "price": float(round(row['Price_Lakh'], 2))
+            }
+            for _, row in heatmap_raw.iterrows()
+        ]
+
         return DatasetStatsResponse(
             number_of_records=int(len(df)),
             average_price=float(round(df['Price_Lakh'].mean(), 2)),
@@ -94,7 +107,8 @@ class ModelService:
             average_area=float(round(df['Area_Sqft'].mean(), 2)),
             bedroom_distribution={str(k): int(v) for k, v in df['Bedrooms'].value_counts().items()},
             facing_distribution={str(k): int(v) for k, v in df['Facing'].value_counts().items()},
-            scatter_data=scatter_data
+            scatter_data=scatter_data,
+            heatmap_data=heatmap_data
         )
 
 model_service = ModelService()
